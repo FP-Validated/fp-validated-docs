@@ -1,0 +1,42 @@
+chain: solana
+category: svm
+status: draft
+runtimes:
+  - docker
+  - kubernetes
+  - helm
+  - argocd
+developerInterfaces:
+  - id: json-rpc-http
+    status: standard
+    transport: http
+    port: 8899
+  - id: websocket-pubsub
+    status: standard
+    transport: ws
+    port: 8900
+ports:
+  - name: gossip
+    port: 8001
+    protocol: udp
+    public: true
+  - name: rpc
+    port: 8899
+    protocol: tcp
+    public: false
+  - name: rpc-ws
+    port: 8900
+    protocol: tcp
+    public: false
+  - name: metrics
+    port: 9100
+    protocol: tcp
+    public: false
+productionNote: Public Solana RPC is shared development and testing infrastructure only; production workloads need dedicated or private RPC capacity.
+samples:
+  required:
+    - get-health
+    - get-slot
+    - get-account-info
+    - send-transaction
+    - logs-subscribe

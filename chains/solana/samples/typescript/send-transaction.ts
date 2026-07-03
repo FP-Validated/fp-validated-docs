@@ -1,0 +1,13 @@
+import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
+import bs58 from 'bs58';
+const connection = new Connection(process.env.SOLANA_RPC_URL ?? 'http://127.0.0.1:8899', 'confirmed');
+const secret = process.env.SOLANA_PRIVATE_KEY_BASE58;
+if (!secret) throw new Error('Set SOLANA_PRIVATE_KEY_BASE58 to a funded signer private key');
+const payer = Keypair.fromSecretKey(bs58.decode(secret));
+const recipient = new PublicKey(process.env.SOLANA_RECIPIENT ?? '11111111111111111111111111111111');
+const lamports = Number(process.env.SOLANA_LAMPORTS ?? Math.floor(0.001 * LAMPORTS_PER_SOL));
+const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
+const transaction = new Transaction({ feePayer: payer.publicKey, blockhash, lastValidBlockHeight }).add(SystemProgram.transfer({ fromPubkey: payer.publicKey, toPubkey: recipient, lamports }));
+transaction.sign(payer);
+const signature = await connection.sendRawTransaction(transaction.serialize(), { skipPreflight: false, preflightCommitment: 'confirmed' });
+console.log(JSON.stringify({ signature, confirmation: await connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, 'confirmed') }, null, 2));

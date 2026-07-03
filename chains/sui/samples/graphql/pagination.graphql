@@ -1,0 +1,8 @@
+query AddressObjects($address: SuiAddress!, $first: Int!, $after: String) {
+  address(address: $address) {
+    objects(first: $first, after: $after) {
+      pageInfo { hasNextPage endCursor }
+      nodes { address version digest }
+    }
+  }
+}

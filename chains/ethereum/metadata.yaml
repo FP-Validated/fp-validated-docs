@@ -1,0 +1,51 @@
+chain: ethereum
+category: evm
+status: draft
+runtimes:
+  - docker
+  - kubernetes
+  - helm
+  - argocd
+developerInterfaces:
+  - id: json-rpc
+    status: standard
+    transport: http
+    port: 8545
+    public: true
+  - id: json-rpc-ws
+    status: standard
+    transport: ws
+    port: 8546
+    public: true
+  - id: beacon-api
+    status: standard
+    transport: http
+    port: 5052
+    public: false
+  - id: engine-api
+    status: internal
+    port: 8551
+    public: false
+ports:
+  - name: p2p
+    port: 30303
+    public: true
+  - name: http-rpc
+    port: 8545
+    public: true
+  - name: ws-rpc
+    port: 8546
+    public: true
+  - name: beacon
+    port: 5052
+    public: false
+  - name: engine
+    port: 8551
+    public: false
+  - name: metrics
+    port: 6060
+    public: false
+sampleLanguages:
+  - curl
+  - typescript
+  - python

@@ -1,0 +1,8 @@
+query ObjectByAddress($object: String!) {
+  current_objects(where: {object_address: {_eq: $object}}) {
+    object_address
+    owner_address
+    state_key_hash
+    last_transaction_version
+  }
+}

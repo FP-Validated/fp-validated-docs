@@ -1,0 +1,8 @@
+query TransactionQuery($digest: String!) {
+  transactionBlock(digest: $digest) {
+    digest
+    effects { status timestamp }
+    sender { address }
+    gasInput { gasSponsor { address } gasPrice gasBudget }
+  }
+}

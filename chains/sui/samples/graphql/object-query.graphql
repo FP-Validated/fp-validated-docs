@@ -1,0 +1,9 @@
+query ObjectQuery($objectId: SuiAddress!) {
+  object(address: $objectId) {
+    address
+    version
+    digest
+    owner { __typename }
+    asMoveObject { contents { type { repr } data } }
+  }
+}

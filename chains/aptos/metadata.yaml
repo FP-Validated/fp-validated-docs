@@ -1,0 +1,40 @@
+chain: aptos
+category: movevm
+status: draft
+runtimes:
+  - docker
+  - kubernetes
+  - helm
+  - argocd
+developerInterfaces:
+  - id: fullnode-rest
+    status: standard
+    transport: http
+    port: 8080
+  - id: indexer-graphql
+    status: standard
+    transport: http
+  - id: transaction-stream-grpc
+    status: standard
+    transport: grpc
+    port: 50051
+ports:
+  - name: api
+    port: 8080
+    public: false
+  - name: p2p
+    port: 6180
+    public: true
+  - name: metrics
+    port: 9101
+    public: false
+  - name: transaction-stream
+    port: 50051
+    public: false
+samples:
+  required:
+    - health-check
+    - get-ledger-info
+    - get-account
+    - submit-transaction
+    - stream-transactions

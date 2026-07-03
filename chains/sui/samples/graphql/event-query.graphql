@@ -1,0 +1,12 @@
+query EventQuery($first: Int!, $after: String, $sender: SuiAddress) {
+  events(first: $first, after: $after, filter: { sender: $sender }) {
+    pageInfo { hasNextPage endCursor }
+    nodes {
+      sendingModule { package { address } name }
+      type { repr }
+      sender { address }
+      contents { json }
+      timestamp
+    }
+  }
+}

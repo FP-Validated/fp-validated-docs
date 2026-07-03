@@ -1,0 +1,8 @@
+query AccountNfts($owner: String!) {
+  current_token_ownerships_v2(where: {owner_address: {_eq: $owner}, amount: {_gt: "0"}}) {
+    token_data_id
+    current_token_data { token_name collection_id token_uri }
+    amount
+    last_transaction_version
+  }
+}

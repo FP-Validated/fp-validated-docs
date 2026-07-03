@@ -1,0 +1,44 @@
+chain: sui
+category: movevm
+status: draft
+lastVerified: 2026-05-28
+runtimes:
+  - docker
+  - kubernetes
+  - helm
+  - argocd
+developerInterfaces:
+  - name: gRPC
+    status: recommended
+    transport: grpc
+    port: 9000
+  - name: GraphQL RPC
+    status: recommended
+    transport: http
+  - name: JSON-RPC
+    status: deprecated
+    transport: http
+    migrationDeadline: 2026-07
+    replacement:
+      - gRPC
+      - GraphQL RPC
+ports:
+  - name: p2p
+    port: 8080
+    protocol: tcp
+    public: true
+  - name: grpc
+    port: 9000
+    protocol: tcp
+    public: false
+  - name: metrics
+    port: 9184
+    protocol: tcp
+    public: false
+samples:
+  required:
+    - health-check
+    - query-latest-checkpoint
+    - query-object
+    - submit-transaction
+    - subscribe-events

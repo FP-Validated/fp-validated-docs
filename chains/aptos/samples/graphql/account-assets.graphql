@@ -1,0 +1,8 @@
+query AccountAssets($owner: String!) {
+  current_fungible_asset_balances(where: {owner_address: {_eq: $owner}}) {
+    owner_address
+    asset_type
+    amount
+    last_transaction_version
+  }
+}
