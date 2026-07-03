@@ -15,6 +15,8 @@ FP Validated supports BSC as a public-safe managed EVM RPC surface for applicati
 - Not in scope: validator operations, consensus APIs, admin/debug/trace methods, raw node ports, or private node-to-node networking.
 - This page documents the external RPC contract only; deeper protocol- or client-specific runbooks live in the pages below.
 
+This runtime verification note confirms that the compose-served web shell is consuming updates from the pushed docs repository.
+
 ## Interface surface
 
 | Interface | Use it for | Operator stance |
