@@ -60,6 +60,17 @@ spec:
 
 Never commit secrets to documentation, examples, Helm values, Docker Compose files, support bundles, or screenshots. Sample configs must use obvious non-secret values such as `REPLACE_ME` only where the surrounding prose explains how to provide a real secret securely.
 
+## Container image supply chain
+
+Externally provided images (for example, foundation-provided client images) must be admitted through the internal registry and its vulnerability scan gate, not deployed directly from a public or foundation registry.
+
+- Mirror the external image into the internal registry under an explicit tag or digest.
+- Require an automatic vulnerability scan on push.
+- Block pulls of images that reach or exceed the defined severity threshold, so a vulnerable image cannot be deployed.
+- Reference the internal image in deployment state and pull it with a scoped, pull-only credential.
+
+See [Container Image Supply Chain](/fp-validated-infra/image-supply-chain) for the full architecture and gate behaviour.
+
 ## RPC hardening
 
 Use `/operations/rpc-exposure-policy` as the canonical classification. At minimum:
