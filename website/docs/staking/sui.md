@@ -27,7 +27,7 @@ Sui uses delegated proof-of-stake. When you stake, your SUI is wrapped in a `Sta
 | Reward frequency | Every epoch (about 24 hours) |
 | Auto-compounding | Yes |
 | Penalties | No principal slashing. Under the tallying rule, a validator reported for poor performance forfeits that epoch's rewards, and so do its stakers |
-| Supported wallets | [Slush](https://slush.app) |
+| Wallets and apps | [Slush](https://slush.app) |
 | Facts last verified | 2026-11-20 |
 
 <!-- staking-facts:end -->

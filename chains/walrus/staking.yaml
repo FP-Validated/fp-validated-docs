@@ -1,0 +1,32 @@
+# Delegator staking facts for website/docs/staking/walrus.md (scripts/staking-facts.mjs).
+chain: walrus
+delegationOpen: true
+network: Walrus Mainnet (on Sui Mainnet)
+token: WAL
+validator:
+  name: FP Validated
+  address: "0x61d5598a35e198e6cafac7eb808191da3742a2a1789716ab89a68a1f934ee5c6"
+  addressLabel: Storage node ID
+  explorer: https://walruscan.com/mainnet/operator/0x61d5598a35e198e6cafac7eb808191da3742a2a1789716ab89a68a1f934ee5c6/operator
+commission:
+  value: "60%"
+  source: onchain
+  changeNotice: storage node commission on rewards; check the explorer for the live and next-epoch rate
+minStake: No minimum documented by Walrus; the staking app shows any limit
+activation: Stake before the midpoint of an epoch to become active in the next epoch; after the midpoint it activates one epoch later. Mainnet epochs last 2 weeks
+unbonding: Two steps. Unstake moves stake to Withdrawing; withdraw when the withdraw epoch starts. About 1 to 3 weeks depending on when in the epoch you unstake
+rewardFrequency: Every epoch (2 weeks on Mainnet)
+autoCompound: Rewards accrue to your staked WAL and are paid with the principal when you withdraw
+penalties: Delegated principal is never slashed. Slashing a misbehaving node burns the operator's commission, and poor node performance lowers delegator rewards
+wallets:
+  - name: Walrus staking app
+    type: dapp
+    url: https://stake-wal.wal.app
+  - name: Slush
+    type: extension
+    url: https://slush.app
+sources:
+  - https://docs.wal.app/docs/operator-guide/stake
+  - https://docs.wal.app/docs/system-overview/wal-tokenomics-faq
+  - https://docs.wal.app/docs/network-reference
+lastVerified: 2026-11-20

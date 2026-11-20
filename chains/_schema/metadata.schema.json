@@ -67,64 +67,9 @@
       "items": { "type": "string", "minLength": 1 },
       "uniqueItems": true
     },
-    "productionNote": { "type": "string", "minLength": 1 },
-    "staking": { "$ref": "#/$defs/staking" }
+    "productionNote": { "type": "string", "minLength": 1 }
   },
   "$defs": {
-    "staking": {
-      "description": "Delegator-facing staking facts. Single source for the key facts table in website/docs/staking/<chain>.md (scripts/staking-facts.mjs).",
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["delegationOpen", "network", "validator", "commission", "minStake", "activation", "unbonding", "rewardFrequency", "autoCompound", "penalties", "wallets", "lastVerified"],
-      "properties": {
-        "delegationOpen": { "type": "boolean" },
-        "network": { "type": "string", "minLength": 1 },
-        "token": { "type": "string", "minLength": 1 },
-        "validator": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["name", "address", "explorer"],
-          "properties": {
-            "name": { "type": "string", "minLength": 1 },
-            "address": { "type": "string", "minLength": 1 },
-            "addressLabel": { "type": "string", "minLength": 1 },
-            "explorer": { "type": "string", "pattern": "^https://" }
-          }
-        },
-        "commission": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["value", "source"],
-          "properties": {
-            "value": { "type": "string", "pattern": "^[0-9]+(\\.[0-9]+)?%$" },
-            "source": { "type": "string", "enum": ["onchain", "contract", "policy"] },
-            "changeNotice": { "type": "string", "minLength": 1 }
-          }
-        },
-        "minStake": { "type": "string", "minLength": 1 },
-        "activation": { "type": "string", "minLength": 1 },
-        "unbonding": { "type": "string", "minLength": 1 },
-        "rewardFrequency": { "type": "string", "minLength": 1 },
-        "autoCompound": { "type": "boolean" },
-        "penalties": { "type": "string", "minLength": 1 },
-        "wallets": {
-          "type": "array",
-          "minItems": 1,
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["name", "type"],
-            "properties": {
-              "name": { "type": "string", "minLength": 1 },
-              "type": { "type": "string", "enum": ["web", "mobile", "extension", "hardware", "custody", "platform"] },
-              "url": { "type": "string", "pattern": "^https://" }
-            }
-          }
-        },
-        "sources": { "type": "array", "items": { "type": "string", "pattern": "^https://" } },
-        "lastVerified": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" }
-      }
-    },
     "developerInterface": {
       "type": "object",
       "additionalProperties": false,

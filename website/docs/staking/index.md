@@ -23,8 +23,14 @@ FP Validated runs validators for proof-of-stake networks and accepts delegation 
 | Network | Token | Guide | Status |
 | --- | --- | --- | --- |
 | Sui | SUI | [Stake SUI](/staking/sui) | draft |
+| Walrus | WAL | [Stake WAL](/staking/walrus) | draft |
+| Sei | SEI | [Stake SEI](/staking/sei) | draft |
+| Injective | INJ | [Stake INJ](/staking/injective) | draft |
+| Initia | INIT | [Stake INIT](/staking/initia) | draft |
+| Aptos | APT | [Stake APT](/staking/aptos) | draft |
+| Monad | MON | [Stake MON](/staking/monad) | draft |
 
-Every guide uses the same layout: key facts, what you need, how to stake, rewards, unstaking, fees, risks, institutional options, FAQ and official references. The key facts table is generated from the chain's `metadata.yaml`, so the validator address and commission shown here come from one reviewed source.
+Every guide uses the same layout: key facts, what you need, how to stake, rewards, unstaking, fees, risks, institutional options, FAQ and official references. The key facts table is generated from `chains/<chain>/staking.yaml`, so the validator address and commission shown here come from one reviewed source.
 
 ## Risks that apply to every chain
 
