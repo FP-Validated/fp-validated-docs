@@ -11,10 +11,11 @@ validator:
 commission:
   value: "11%"
   source: onchain
-  changeNotice: effective from epoch 1318, up from 10%. Sui applies commission changes at the next epoch, so check the explorer for the live rate
+  changeNotice: from epoch 1318; 10% before that. Sui applies commission changes at the next epoch, so check the explorer for the live rate
 minStake: 1 SUI per stake object
 activation: Stake becomes active at the start of the next epoch (about 24 hours)
 unbonding: None. Unstaking returns principal and accrued rewards in the same transaction
+unbondingShort: None
 rewardFrequency: Every epoch (about 24 hours)
 autoCompound: true
 penalties: No principal slashing. Under the tallying rule, a validator reported for poor performance forfeits that epoch's rewards, and so do its stakers
@@ -22,6 +23,9 @@ wallets:
   - name: Slush
     type: extension
     url: https://slush.app
+  - name: SuiVision staking page
+    type: dapp
+    url: https://suivision.xyz/myspace?feature=Stake&validatorAddress=0x13d90417a640de83e0b83683f12028961de06195ab004156df80111a9499081b
 sources:
   - https://docs.sui.io/develop/sui-architecture/tokenomics-overview
   - https://docs.sui.io/references/framework/sui_sui_system/staking_pool

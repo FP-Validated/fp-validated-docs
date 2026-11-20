@@ -13,18 +13,19 @@ commission:
   source: onchain
   changeNotice: commission applies to the inflationary block reward; check the explorer for the current and next-epoch rate
 minStake: No practical minimum (amounts below 1 gwei are rejected)
-activation: Active from the next epoch, or the one after if you delegate after the epoch's boundary block. Epochs are about 4 hours
-unbonding: Two steps. Undelegate, wait 1 epoch, then withdraw
+activation: Active from the next epoch, or the one after if you stake after the epoch's boundary block. Monad docs put a boundary block about every 4 hours 12 minutes
+unbonding: Two steps. Unstaking takes effect at the next epoch (or the one after), then you wait 1 more epoch and withdraw. Several hours in total
+unbondingShort: Several hours
 rewardFrequency: Every block the validator proposes; claim or compound manually
 autoCompound: false
 penalties: Automated in-protocol slashing is not implemented. Rewards depend on the validator proposing blocks
 wallets:
+  - name: MonadVision validator page
+    type: dapp
+    url: https://monadvision.com/validator/0xD9127cae9313208454341A3560e0376b424810C8
   - name: MetaMask
     type: extension
     url: https://metamask.io
-  - name: MonadVision staking page
-    type: dapp
-    url: https://monadvision.com/myspace?feature=Stake
 sources:
   - https://docs.monad.xyz/reference/staking/overview
   - https://docs.monad.xyz/monad-arch/consensus/staking

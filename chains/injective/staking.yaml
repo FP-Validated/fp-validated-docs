@@ -14,15 +14,23 @@ commission:
   changeNotice: check the explorer for the live rate
 minStake: No protocol minimum
 activation: Immediate. Rewards start accruing from the next block
-unbonding: 21 days, with no rewards during unbonding. At most 7 unbonding entries per validator at a time
+unbonding: 21 days, with no rewards and no transfers during unbonding
+unbondingShort: 21 days
 rewardFrequency: Every block; claim manually
 autoCompound: false
-penalties: On-chain slashing fractions for double signing and downtime are 0% (checked 2026-11-20). A validator that signs fewer than 50% of the last 100,000 blocks is jailed and earns no rewards while jailed
+penalties: On-chain slashing fractions for double signing and downtime read 0% on 2026-11-20, but Injective describes slashing for both and governance can change the values. A validator that signs fewer than 50% of the last 100,000 blocks is jailed and earns no rewards while jailed
 wallets:
   - name: Injective Hub
     type: dapp
-    url: https://injhub.com/stake
+    url: https://injhub.com/validators/injvaloper1kfs4s96fmp00astyd56w4hpls2w2a5tre78nxd/
+  - name: MetaMask
+    type: extension
+    url: https://metamask.io
+  - name: Keplr
+    type: extension
+    url: https://www.keplr.app
 sources:
+  - https://injective.com/blog/injective-hub-guide/
   - https://sentry.lcd.injective.network/cosmos/staking/v1beta1/params
   - https://sentry.lcd.injective.network/cosmos/slashing/v1beta1/params
 lastVerified: 2026-11-20

@@ -18,7 +18,8 @@
     "autoCompound",
     "penalties",
     "wallets",
-    "lastVerified"
+    "lastVerified",
+    "unbondingShort"
   ],
   "properties": {
     "chain": {
@@ -160,6 +161,12 @@
     "lastVerified": {
       "type": "string",
       "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "unbondingShort": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 40,
+      "description": "Short form for the overview table."
     }
   }
 }

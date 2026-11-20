@@ -9,7 +9,11 @@ last_verified: 2026-11-20
 
 # Stake SEI with FP Validated
 
-Sei uses delegated proof-of-stake built on the Cosmos SDK. You delegate SEI from your own address to a validator, and your tokens never leave your control.
+Sei uses delegated proof-of-stake. You delegate SEI from your own address to a validator, and your tokens never leave your control.
+
+:::tip Fastest way to stake
+Open [FP Validated on the Sei Dashboard](https://dashboard.sei.io/stake/seivaloper17ey435trqdj5vlds2lgev5cwxg08g6mqg2ts2k). The link goes straight to FP Validated's validator page. Connect your wallet, check the validator address against the table below, enter an amount and sign.
+:::
 
 ## Key facts
 
@@ -19,78 +23,94 @@ Sei uses delegated proof-of-stake built on the Cosmos SDK. You delegate SEI from
 | --- | --- |
 | Validator | FP Validated |
 | Validator operator address | `seivaloper17ey435trqdj5vlds2lgev5cwxg08g6mqg2ts2k` |
-| Explorer | [View on explorer](https://www.mintscan.io/sei/validators/seivaloper17ey435trqdj5vlds2lgev5cwxg08g6mqg2ts2k) |
+| Explorer | [View on explorer](https://dashboard.sei.io/stake/seivaloper17ey435trqdj5vlds2lgev5cwxg08g6mqg2ts2k) |
 | Commission | 5% (network minimum commission is 5%; check the explorer for the live rate) |
 | Minimum stake | No protocol minimum |
 | Stake activation | Immediate. Rewards start accruing from the next block |
-| Unbonding period | 21 days, with no rewards during unbonding. At most 7 unbonding entries per validator at a time |
+| Unbonding period | 21 days, with no rewards and no transfers during unbonding |
 | Reward frequency | Every block; claim manually |
 | Auto-compounding | No |
-| Penalties | On-chain slashing fractions for double signing and downtime are 0% (checked 2026-11-20). A validator that misses too many blocks is jailed and earns no rewards while jailed |
-| Wallets and apps | [Sei Dashboard](https://dashboard.sei.io/stake), [MetaMask](https://metamask.io), [Compass](https://compasswallet.io) |
+| Penalties | Sei does not slash funds (Sei docs; on-chain slashing fractions are 0%). A validator that misses too many blocks is jailed and earns no rewards while jailed |
+| Wallets and apps | [Sei Dashboard](https://dashboard.sei.io/stake/seivaloper17ey435trqdj5vlds2lgev5cwxg08g6mqg2ts2k), [MetaMask](https://metamask.io) |
 | Facts last verified | 2026-11-20 |
 
 <!-- staking-facts:end -->
 
 ## Before you start
 
-- An EVM-compatible wallet such as MetaMask or Compass. Sei is moving to EVM-only under SIP-3. If your SEI is in a Cosmos-only wallet such as Keplr or Leap, move it with the [SIP-3 wallet upgrade tool](https://dashboard.sei.io/evm-upgrade) first.
-- Enough SEI to stake, plus a little extra for gas.
+- An EVM wallet such as [MetaMask](https://metamask.io) with Sei Mainnet added. The Sei Dashboard lists the wallets it supports when you connect.
+- If your SEI is in a Cosmos-only wallet such as Keplr or Leap, move it first. Sei is becoming EVM-only under SIP-3, and the [SIP-3 wallet upgrade tool](https://dashboard.sei.io/evm-upgrade) on the Sei Dashboard migrates those balances.
+- Enough SEI to stake, plus a little left unstaked for gas. You need gas again to claim rewards and to unstake.
 
 ## Stake with the Sei Dashboard
 
-1. Open [the Sei Dashboard](https://dashboard.sei.io/stake) and connect your wallet.
-2. Search the validator list for **FP Validated**.
-3. Confirm the validator operator address matches the key facts table. Do not rely on the name alone.
-4. Enter the amount of SEI and choose **Stake** (or **Delegate**).
-5. Review and sign the transaction in your wallet.
+1. Open [FP Validated on the Sei Dashboard](https://dashboard.sei.io/stake/seivaloper17ey435trqdj5vlds2lgev5cwxg08g6mqg2ts2k) and connect your wallet. The dashboard asks you to accept its terms of use the first time.
+2. Confirm the validator operator address matches the key facts table, and that the page shows the commission in the table.
+3. Enter the amount of SEI and choose the stake (delegate) action.
+4. Review and approve the transaction in your wallet.
 
-Rewards start accruing from the next block.
+### What to expect after you stake
+
+- The delegation is active as soon as the transaction confirms. There is no warm-up period.
+- Rewards start building up from the next block. They show as claimable rewards in the Sei Dashboard.
+- Your staked balance does not grow by itself. Rewards stay separate until you claim them.
 
 ## Rewards
 
 - Rewards accrue every block but are **not** compounded automatically. Claim them from the Sei Dashboard and stake them again if you want them to compound.
+- Each claim costs gas, so claiming very small amounts can cost more than it earns.
 - Commission is taken from rewards, not principal.
 
 ## Unstake
 
-1. In the Sei Dashboard, open your delegation to FP Validated and choose **Unstake** (or **Undelegate**).
-2. Sign the transaction.
-3. Your SEI is returned to your address automatically when the 21-day unbonding period ends. It earns no rewards during unbonding.
+1. In the Sei Dashboard, open your delegation to FP Validated and choose the unstake (undelegate) action.
+2. Approve the transaction.
+3. Your SEI returns to your address automatically when the 21-day unbonding period ends. You do not need to send a second transaction.
 
-You can have at most 7 unbonding requests to the same validator at once. To move stake to another validator without waiting, use **Redelegate** if the Sei Dashboard offers it.
+During the 21 days the SEI earns no rewards and cannot be transferred or sold, and you cannot shorten the wait. You can have at most 7 unbonding requests from the same validator in progress at once.
+
+### Move stake without waiting
+
+A redelegation moves stake from one validator to another immediately, with no 21-day wait and no gap in rewards. After you redelegate to a validator, you cannot redelegate that stake onward from it for 21 days. At most 7 redelegations between the same pair of validators can be in progress at once.
 
 ## Fees
 
-- **Validator commission:** shown in the key facts table. Check the explorer for the live rate.
+- **Validator commission:** shown in the key facts table. The Sei Dashboard shows the live rate and the maximum rate the validator has committed to.
 - **Gas:** each staking, claiming and unstaking transaction pays a small gas fee in SEI.
 
 ## Risks
 
-- **Jailing.** On-chain slashing for double signing and downtime is currently set to 0%, so your principal is not reduced. A validator that misses too many blocks is jailed, and its delegators earn no rewards while it is jailed. Slashing parameters can change through governance.
-- **Unbonding period.** Unstaked tokens are locked for 21 days and cannot be transferred during that time.
+- **No slashing of funds.** Sei's documentation states that Sei does not slash funds, and the on-chain slashing fractions for double signing and downtime are 0%. Governance can change these parameters.
+- **Jailing.** A validator that misses too many blocks is jailed, and its delegators earn no rewards while it is jailed.
+- **Unbonding period.** Unstaked tokens are locked for 21 days, and the SEI price can move while you wait.
 - **Signing risk.** Always check the validator address before signing.
 
 See [Responsiveness and Slashing Policy](/fp-validated-infra/responsiveness-and-slashing-policy) for how FP Validated responds to incidents.
 
 ## Institutional staking
 
-Institutions can stake SEI from custody platforms that support Sei delegation. Contact FP Validated to confirm that our validator is available on your custodian.
+Institutions can stake SEI from custody platforms that support Sei delegation. Give your custodian the validator operator address in the key facts table, and [contact FP Validated](/staking#need-help) to confirm availability on your custodian.
 
 ## FAQ
 
 **Do I need to claim rewards?**
-Yes. Rewards build up until you claim them. Claiming and re-staking is how you compound.
+Yes. Rewards build up until you claim them. Claiming and staking them again is how you compound.
 
 **When do I get my tokens back after unstaking?**
 After 21 days. They return to your address automatically.
 
 **Can I switch validators without waiting 21 days?**
-Yes, with a redelegation, if your wallet or app supports it.
+Yes, with a redelegation. See [Move stake without waiting](#move-stake-without-waiting).
+
+**My SEI is in Keplr or Leap. Can I stake from there?**
+Move it to an EVM wallet first with the SIP-3 wallet upgrade tool linked above. Sei is retiring Cosmos-only wallets.
+
+**What happens if FP Validated goes offline?**
+Your principal is not reduced. If the validator is jailed you earn no rewards until it is active again. Incidents are posted on the [status page](https://fpvalidated.statuspage.io/).
 
 ## Official references
 
-- [Sei Dashboard staking](https://dashboard.sei.io/stake)
+- [Sei docs: Staking](https://docs.sei.io/learn/general-staking)
 - [Sei staking parameters (REST)](https://rest.sei-apis.com/cosmos/staking/v1beta1/params)
 - [Sei slashing parameters (REST)](https://rest.sei-apis.com/cosmos/slashing/v1beta1/params)
-- [FP Validated on Mintscan](https://www.mintscan.io/sei/validators/seivaloper17ey435trqdj5vlds2lgev5cwxg08g6mqg2ts2k)
+- [FP Validated on the Sei Dashboard](https://dashboard.sei.io/stake/seivaloper17ey435trqdj5vlds2lgev5cwxg08g6mqg2ts2k)

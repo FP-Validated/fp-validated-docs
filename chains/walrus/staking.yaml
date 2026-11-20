@@ -12,9 +12,10 @@ commission:
   value: "60%"
   source: onchain
   changeNotice: storage node commission on rewards; check the explorer for the live and next-epoch rate
-minStake: No minimum documented by Walrus; the staking app shows any limit
+minStake: 1 WAL per stake
 activation: Stake before the midpoint of an epoch to become active in the next epoch; after the midpoint it activates one epoch later. Mainnet epochs last 2 weeks
-unbonding: Two steps. Unstake moves stake to Withdrawing; withdraw when the withdraw epoch starts. About 1 to 3 weeks depending on when in the epoch you unstake
+unbonding: Two steps. Unstake, then withdraw when the withdraw epoch starts. 1 to 3 weeks by the documented midpoint rule; the Walrus blog says to allow up to a month
+unbondingShort: 1 to 4 weeks
 rewardFrequency: Every epoch (2 weeks on Mainnet)
 autoCompound: Rewards accrue to your staked WAL and are paid with the principal when you withdraw
 penalties: Delegated principal is never slashed. Slashing a misbehaving node burns the operator's commission, and poor node performance lowers delegator rewards
@@ -29,4 +30,6 @@ sources:
   - https://docs.wal.app/docs/operator-guide/stake
   - https://docs.wal.app/docs/system-overview/wal-tokenomics-faq
   - https://docs.wal.app/docs/network-reference
+  - https://www.walrus.xyz/blog/staking-wal
+  - https://raw.githubusercontent.com/MystenLabs/walrus/main/contracts/walrus/sources/staking/staked_wal.move
 lastVerified: 2026-11-20

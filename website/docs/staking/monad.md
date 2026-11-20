@@ -9,7 +9,11 @@ last_verified: 2026-11-20
 
 # Stake MON with FP Validated
 
-Monad staking runs through a staking precompile. You delegate MON to a validator by its **validator ID**, not by an address. FP Validated's validator ID is in the key facts table.
+Monad staking runs through a staking contract built into the chain. Validators are identified by a numeric **validator ID**, and FP Validated's ID is in the key facts table. Your stake is recorded against your own address.
+
+:::tip Fastest way to stake
+Open [FP Validated on MonadVision](https://monadvision.com/validator/0xD9127cae9313208454341A3560e0376b424810C8), connect your wallet and select **Stake**. Check that the page shows the validator ID in the table below.
+:::
 
 ## Key facts
 
@@ -22,40 +26,50 @@ Monad staking runs through a staking precompile. You delegate MON to a validator
 | Explorer | [View on explorer](https://monadvision.com/validator/0xD9127cae9313208454341A3560e0376b424810C8) |
 | Commission | 15% (commission applies to the inflationary block reward; check the explorer for the current and next-epoch rate) |
 | Minimum stake | No practical minimum (amounts below 1 gwei are rejected) |
-| Stake activation | Active from the next epoch, or the one after if you delegate after the epoch's boundary block. Epochs are about 4 hours |
-| Unbonding period | Two steps. Undelegate, wait 1 epoch, then withdraw |
+| Stake activation | Active from the next epoch, or the one after if you stake after the epoch's boundary block. Monad docs put a boundary block about every 4 hours 12 minutes |
+| Unbonding period | Two steps. Unstaking takes effect at the next epoch (or the one after), then you wait 1 more epoch and withdraw. Several hours in total |
 | Reward frequency | Every block the validator proposes; claim or compound manually |
 | Auto-compounding | No |
 | Penalties | Automated in-protocol slashing is not implemented. Rewards depend on the validator proposing blocks |
-| Wallets and apps | [MetaMask](https://metamask.io), [MonadVision staking page](https://monadvision.com/myspace?feature=Stake) |
+| Wallets and apps | [MonadVision validator page](https://monadvision.com/validator/0xD9127cae9313208454341A3560e0376b424810C8), [MetaMask](https://metamask.io) |
 | Facts last verified | 2026-11-20 |
 
 <!-- staking-facts:end -->
 
 ## Before you start
 
-- An EVM wallet such as [MetaMask](https://metamask.io) connected to Monad Mainnet.
-- Enough MON to stake, plus a little extra for gas.
+- An EVM wallet such as [MetaMask](https://metamask.io) with Monad Mainnet added.
+- Enough MON to stake, plus a little left unstaked for gas. You need gas again to claim rewards, to unstake and to withdraw.
 
 ## Stake
 
-1. Open a staking app that supports Monad, such as the [MonadVision staking page](https://monadvision.com/myspace?feature=Stake), and connect your wallet.
-2. Choose **FP Validated** and confirm the validator ID matches the key facts table.
-3. Enter the amount of MON and sign the transaction.
+1. Open [FP Validated on MonadVision](https://monadvision.com/validator/0xD9127cae9313208454341A3560e0376b424810C8) and connect your wallet.
+2. Confirm the page shows the validator ID in the key facts table.
+3. Select **Stake**, enter the amount of MON and approve the transaction in your wallet.
 
-Your stake becomes active at the next epoch. If you delegate after the epoch's boundary block, it activates one epoch later. Epochs are about 4 hours.
+Other staking apps and custody platforms work the same way. If one asks you to pick a validator, search for FP Validated and confirm the validator ID.
+
+### What to expect after you stake
+
+- New stake is not active straight away. Staking changes are committed at a boundary block, which Monad's docs put about every 4 hours 12 minutes, and take effect when the next epoch starts shortly after.
+- If you stake after the boundary block of the current epoch, your stake waits one more epoch.
+- In practice, allow several hours before the stake starts earning. Some custody platforms quote an epoch length of about 5.5 hours.
 
 ## Rewards
 
 - Rewards accrue whenever the validator produces a block.
-- They are **not** compounded automatically. Use **Claim** to send rewards to your address, or **Compound** to add them to your stake from the next epoch.
-- Commission applies to the inflationary block reward before the rest is shared with delegators.
+- They are **not** compounded automatically. Use **Claim** to send rewards to your address, or **Compound** to add them to your stake. Compounded rewards become active at a later epoch, like any new stake.
+- Commission applies to the block reward before the rest is shared with delegators.
 
 ## Unstake
 
-1. Choose **Unstake** (undelegate) and enter the amount. Only active stake can be undelegated.
-2. Wait one epoch.
-3. Choose **Withdraw** to move the MON to your address.
+Getting MON back takes two transactions, with a wait between them.
+
+1. Choose **Unstake** and enter the amount. Only active stake can be unstaked.
+2. Wait. The unstake takes effect at the next epoch (or the one after, if you asked after the boundary block), and Monad then holds the MON for 1 more epoch.
+3. Choose **Withdraw** to move the MON to your address. It does not arrive by itself.
+
+Monad's docs give the 1-epoch withdrawal delay but not a total in hours. By the rule above, expect several hours, up to about half a day.
 
 ## Fees
 
@@ -66,24 +80,28 @@ Your stake becomes active at the next epoch. If you delegate after the epoch's b
 
 - **No automated slashing.** Monad does not currently implement in-protocol slashing.
 - **Performance risk.** Rewards come from blocks the validator produces, so downtime reduces rewards.
-- **Active set risk.** A validator must keep at least 10,000,000 MON staked and stay in the top 200 by stake to remain active.
+- **Active set risk.** A validator must keep at least 10,000,000 MON staked and stay in the top 200 by stake to remain active. A validator outside the active set earns no rewards.
+- **Signing risk.** Always check the validator ID before signing.
 
 See [Responsiveness and Slashing Policy](/fp-validated-infra/responsiveness-and-slashing-policy) for how FP Validated responds to incidents.
 
 ## Institutional staking
 
-Institutions can stake MON from custody platforms that support Monad delegation. Contact FP Validated to confirm that our validator is available on your custodian.
+Institutions can stake MON from custody platforms that support Monad delegation. Custody platforms usually ask for the validator ID in the key facts table. [Contact FP Validated](/staking#need-help) to confirm availability on your custodian.
 
 ## FAQ
 
-**Why do I need a validator ID instead of an address?**
-Monad's staking precompile identifies validators by numeric ID. Wallets and staking apps usually show the ID next to the validator name.
+**Why a validator ID instead of an address?**
+Monad's staking contract identifies validators by numeric ID. Wallets and staking apps usually show the ID next to the validator name.
 
 **How long does unstaking take?**
-One epoch, about 4 hours, after your undelegation takes effect.
+Several hours, up to about half a day, and then you send a withdraw transaction. See [Unstake](#unstake).
 
 **Do I need to claim rewards?**
-Yes. Claim them, or compound them to add them to your stake.
+Yes. Claim them to your address, or compound them to add them to your stake.
+
+**I unstaked hours ago and the MON is not in my wallet.**
+Select **Withdraw**. Unstaked MON stays in the staking contract until you withdraw it.
 
 ## Official references
 
