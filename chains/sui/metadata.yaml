@@ -42,3 +42,33 @@ samples:
     - query-object
     - submit-transaction
     - subscribe-events
+staking:
+  delegationOpen: true
+  network: Sui Mainnet
+  token: SUI
+  validator:
+    name: FP Validated
+    address: "0x13d90417a640de83e0b83683f12028961de06195ab004156df80111a9499081b"
+    addressLabel: Validator address
+    explorer: https://suiscan.xyz/mainnet/validator/0x13d90417a640de83e0b83683f12028961de06195ab004156df80111a9499081b
+  commission:
+    value: "10%"
+    source: onchain
+    changeNotice: Sui validators can change commission without prior notice; a change takes effect at the next epoch. Check the explorer for the live rate.
+  minStake: 1 SUI per stake object
+  activation: Stake becomes active at the start of the next epoch (about 24 hours)
+  unbonding: None. Unstaking returns principal and accrued rewards in the same transaction
+  rewardFrequency: Every epoch (about 24 hours)
+  autoCompound: true
+  penalties: No principal slashing. Under the tallying rule, a validator reported for poor performance forfeits that epoch's rewards, and so do its stakers
+  wallets:
+    - name: Slush
+      type: extension
+      url: https://slush.app
+    - name: FP Validated Platform
+      type: platform
+  sources:
+    - https://docs.sui.io/develop/sui-architecture/tokenomics-overview
+    - https://docs.sui.io/references/framework/sui_sui_system/staking_pool
+    - https://docs.sui.io/onchain-finance/asset-custody/wallets/slush
+  lastVerified: 2026-11-20
