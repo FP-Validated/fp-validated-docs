@@ -1,0 +1,34 @@
+# Delegator staking facts for website/docs/staking/sei.md (scripts/staking-facts.mjs).
+chain: sei
+delegationOpen: true
+network: Sei Mainnet (pacific-1)
+token: SEI
+validator:
+  name: FP Validated
+  address: seivaloper17ey435trqdj5vlds2lgev5cwxg08g6mqg2ts2k
+  addressLabel: Validator operator address
+  explorer: https://dashboard.sei.io/stake/seivaloper17ey435trqdj5vlds2lgev5cwxg08g6mqg2ts2k
+commission:
+  value: "5%"
+  source: onchain
+  changeNotice: network minimum commission is 5%; check the explorer for the live rate
+minStake: No protocol minimum
+activation: Immediate. Rewards start accruing from the next block
+unbonding: 21 days, with no rewards and no transfers during unbonding
+unbondingShort: 21 days
+rewardFrequency: Every block; claim manually
+autoCompound: false
+penalties: Sei does not slash funds (Sei docs; on-chain slashing fractions are 0%). A validator that misses too many blocks is jailed and earns no rewards while jailed
+wallets:
+  - name: Sei Dashboard
+    type: dapp
+    url: https://dashboard.sei.io/stake/seivaloper17ey435trqdj5vlds2lgev5cwxg08g6mqg2ts2k
+  - name: MetaMask
+    type: extension
+    url: https://metamask.io
+sources:
+  - https://docs.sei.io/learn/general-staking
+  - https://rest.sei-apis.com/cosmos/staking/v1beta1/params
+  - https://rest.sei-apis.com/cosmos/slashing/v1beta1/params
+  - https://dashboard.sei.io/evm-upgrade
+lastVerified: 2026-11-20

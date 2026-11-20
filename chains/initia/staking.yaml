@@ -1,0 +1,29 @@
+# Delegator staking facts for website/docs/staking/initia.md (scripts/staking-facts.mjs).
+chain: initia
+delegationOpen: true
+network: Initia Mainnet
+token: INIT
+validator:
+  name: FP Validated
+  address: initvaloper13ze0ryc7vfj2n86sfxfugww4qygjf8mnxxy9uk
+  addressLabel: Validator operator address
+  explorer: https://scan.initia.xyz/interwoven-1/validators/initvaloper13ze0ryc7vfj2n86sfxfugww4qygjf8mnxxy9uk
+commission:
+  value: "5%"
+  source: onchain
+  changeNotice: network minimum commission is 5%; check the explorer for the live rate
+minStake: No protocol minimum
+activation: Immediate. Rewards start accruing from the next block
+unbonding: 21 days, with no rewards and no transfers during unbonding
+unbondingShort: 21 days
+rewardFrequency: Every block; claim manually
+autoCompound: false
+penalties: Double signing slashes 5% of the stake delegated to the validator. Downtime slashing is 0%, but a validator that signs fewer than 75% of the last 10,000 blocks is jailed and earns no rewards while jailed
+wallets:
+  - name: Initia App
+    type: dapp
+    url: https://app.initia.xyz/liquidity/uinit/provide
+sources:
+  - https://rest.initia.xyz/initia/mstaking/v1/params
+  - https://rest.initia.xyz/cosmos/slashing/v1beta1/params
+lastVerified: 2026-11-20

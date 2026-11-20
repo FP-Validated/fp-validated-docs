@@ -18,6 +18,10 @@ Sui is a MoveVM-based chain where operators expose full node data to wallets, ba
 Sui JSON-RPC is deprecated. Operators and application teams should migrate production integrations to gRPC or GraphQL RPC before the July 2026 removal deadline documented in the [Sui API reference](https://docs.sui.io/references/sui-api).
 :::
 
+:::tip Staking SUI
+To delegate SUI to FP Validated, see [Stake SUI](/staking/sui).
+:::
+
 ## Interface strategy
 
 | Interface | Use it for | Operator stance |

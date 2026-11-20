@@ -1,0 +1,32 @@
+# Delegator staking facts for website/docs/staking/aptos.md (scripts/staking-facts.mjs).
+chain: aptos
+delegationOpen: true
+network: Aptos Mainnet
+token: APT
+validator:
+  name: FP Validated
+  address: "0x48a7c513805eb2636d420879f26ec36ce9b22f7adcf32ef8f618058f80552696"
+  addressLabel: Delegation pool address
+  explorer: https://explorer.aptoslabs.com/validator/0x48a7c513805eb2636d420879f26ec36ce9b22f7adcf32ef8f618058f80552696?network=mainnet
+commission:
+  value: "2%"
+  source: onchain
+  changeNotice: operator commission; a change applies from the next lockup cycle
+minStake: 11 APT to start. The pool requires each delegator to keep at least 10 APT staked
+activation: Stake becomes active at the next epoch (epochs last 2 hours). A small add-stake fee is withheld when you stake mid-epoch so new stake does not earn rewards for an epoch it was not active in
+unbonding: Unstaked APT stays pending until the pool's 14-day lockup cycle ends, then you withdraw it
+unbondingShort: Up to 14 days
+rewardFrequency: Every epoch (2 hours)
+autoCompound: true
+penalties: The Aptos framework has no slashing. Rewards scale with the validator's successful block proposals
+wallets:
+  - name: Aptos Explorer staking page
+    type: dapp
+    url: https://explorer.aptoslabs.com/validator/0x48a7c513805eb2636d420879f26ec36ce9b22f7adcf32ef8f618058f80552696?network=mainnet
+  - name: Petra
+    type: extension
+    url: https://petra.app
+sources:
+  - https://aptos.dev/network/blockchain/delegated-staking
+  - https://raw.githubusercontent.com/aptos-labs/aptos-core/main/aptos-move/framework/aptos-framework/sources/delegation_pool.move
+lastVerified: 2026-11-20
