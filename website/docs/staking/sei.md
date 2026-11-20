@@ -11,7 +11,7 @@ last_verified: 2026-11-20
 
 Sei uses delegated proof-of-stake. You delegate SEI from your own address to a validator, and your tokens never leave your control.
 
-:::tip Fastest way to stake
+:::tip[Fastest way to stake]
 Open [FP Validated on the Sei Dashboard](https://dashboard.sei.io/stake/seivaloper17ey435trqdj5vlds2lgev5cwxg08g6mqg2ts2k). The link goes straight to FP Validated's validator page. Connect your wallet, check the validator address against the table below, enter an amount and sign.
 :::
 

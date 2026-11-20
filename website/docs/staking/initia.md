@@ -11,7 +11,7 @@ last_verified: 2026-11-20
 
 Initia uses delegated proof-of-stake built on the Cosmos SDK. You delegate INIT from your own address to a validator, and your tokens never leave your control.
 
-:::tip Fastest way to stake
+:::tip[Fastest way to stake]
 Open [INIT staking in the Initia App](https://app.initia.xyz/liquidity/uinit/provide). Staking sits under **Liquidity** in the app, not under a menu called Staking. Connect your wallet, enter an amount, and pick **FP Validated** when the app asks for a validator. Check the validator address against the table below.
 :::
 

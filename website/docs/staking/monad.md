@@ -11,7 +11,7 @@ last_verified: 2026-11-20
 
 Monad staking runs through a staking contract built into the chain. Validators are identified by a numeric **validator ID**, and FP Validated's ID is in the key facts table. Your stake is recorded against your own address.
 
-:::tip Fastest way to stake
+:::tip[Fastest way to stake]
 Open [FP Validated on MonadVision](https://monadvision.com/validator/0xD9127cae9313208454341A3560e0376b424810C8), connect your wallet and select **Stake**. Check that the page shows the validator ID in the table below.
 :::
 

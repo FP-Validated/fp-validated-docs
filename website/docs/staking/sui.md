@@ -11,7 +11,7 @@ last_verified: 2026-11-20
 
 Sui uses delegated proof-of-stake. When you stake, your SUI is wrapped in a `StakedSui` object that stays in your own address and records which validator pool it belongs to. FP Validated never takes custody of the SUI you stake.
 
-:::tip Fastest way to stake
+:::tip[Fastest way to stake]
 Open [FP Validated on SuiVision](https://suivision.xyz/myspace?feature=Stake&validatorAddress=0x13d90417a640de83e0b83683f12028961de06195ab004156df80111a9499081b). The link opens the staking form with FP Validated already selected. Connect your wallet, check the validator address against the table below, enter an amount and sign.
 :::
 

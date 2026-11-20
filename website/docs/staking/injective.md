@@ -11,7 +11,7 @@ last_verified: 2026-11-20
 
 Injective uses delegated proof-of-stake built on the Cosmos SDK. You delegate INJ from your own address to a validator, and your tokens never leave your control.
 
-:::tip Fastest way to stake
+:::tip[Fastest way to stake]
 Open [FP Validated on Injective Hub](https://injhub.com/validators/injvaloper1kfs4s96fmp00astyd56w4hpls2w2a5tre78nxd/). The link goes straight to FP Validated's validator page. Connect your wallet, check the validator address against the table below, enter an amount and sign.
 :::
 

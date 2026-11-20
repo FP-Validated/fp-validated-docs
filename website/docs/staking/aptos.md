@@ -11,7 +11,7 @@ last_verified: 2026-11-20
 
 FP Validated runs an Aptos delegation pool. Anyone can add APT to the pool, and the pool stakes it with FP Validated's validator. Your share of the pool belongs to your own address.
 
-:::tip Fastest way to stake
+:::tip[Fastest way to stake]
 Open the [FP Validated pool on the Aptos Explorer](https://explorer.aptoslabs.com/validator/0x48a7c513805eb2636d420879f26ec36ce9b22f7adcf32ef8f618058f80552696?network=mainnet), connect your wallet and select **Stake**. The explorer lists pools by address, not by name, so use this link instead of searching, and check the pool address against the table below.
 :::
 
