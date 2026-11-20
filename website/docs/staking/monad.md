@@ -53,7 +53,7 @@ Other staking apps and custody platforms work the same way. If one asks you to p
 
 - New stake is not active straight away. Staking changes are committed at a boundary block, which Monad's docs put about every 4 hours 12 minutes, and take effect when the next epoch starts shortly after.
 - If you stake after the boundary block of the current epoch, your stake waits one more epoch.
-- In practice, allow several hours before the stake starts earning. Some custody platforms quote an epoch length of about 5.5 hours.
+- In practice, allow several hours before the stake starts earning.
 
 ## Rewards
 
