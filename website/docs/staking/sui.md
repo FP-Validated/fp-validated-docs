@@ -20,14 +20,14 @@ Sui uses delegated proof-of-stake. When you stake, your SUI is wrapped in a `Sta
 | Validator | FP Validated |
 | Validator address | `0x13d90417a640de83e0b83683f12028961de06195ab004156df80111a9499081b` |
 | Explorer | [View on explorer](https://suiscan.xyz/mainnet/validator/0x13d90417a640de83e0b83683f12028961de06195ab004156df80111a9499081b) |
-| Commission | 10% (Sui validators can change commission without prior notice; a change takes effect at the next epoch. Check the explorer for the live rate.) |
+| Commission | 11% (effective from epoch 1318, up from 10%. Sui applies commission changes at the next epoch, so check the explorer for the live rate) |
 | Minimum stake | 1 SUI per stake object |
 | Stake activation | Stake becomes active at the start of the next epoch (about 24 hours) |
 | Unbonding period | None. Unstaking returns principal and accrued rewards in the same transaction |
 | Reward frequency | Every epoch (about 24 hours) |
 | Auto-compounding | Yes |
 | Penalties | No principal slashing. Under the tallying rule, a validator reported for poor performance forfeits that epoch's rewards, and so do its stakers |
-| Supported wallets | [Slush](https://slush.app), FP Validated Platform |
+| Supported wallets | [Slush](https://slush.app) |
 | Facts last verified | 2026-11-20 |
 
 <!-- staking-facts:end -->
@@ -38,7 +38,7 @@ Live commission, total stake and APY are shown on the explorer link above. This 
 
 - A Sui wallet that supports staking, such as [Slush](https://slush.app). Other wallets work if they let you pick a validator; always check the address.
 - At least 1 SUI to stake, plus a small amount of SUI left over for gas.
-- For institutions: a custody platform that can sign Sui transactions (Ed25519), or access to the [FP Validated Platform](/platform).
+- For institutions: a custody platform that can sign Sui transactions (Ed25519).
 
 ## Stake from a wallet
 
@@ -55,7 +55,7 @@ Wallet screens change often, so the steps below describe what to do rather than 
 
 - Rewards are calculated at the end of every epoch (about 24 hours) and added to the value of your stake. There is nothing to claim and no extra transaction to compound.
 - You earn rewards only for epochs in which your stake was active for the whole epoch. Stake added during an epoch starts earning from the next one.
-- Commission is taken from rewards, not from your principal. With a 10% commission, FP Validated receives 10% of the rewards your stake earns.
+- Commission is taken from rewards, not from your principal. With an 11% commission, FP Validated receives 11% of the rewards your stake earns.
 
 ## Unstake
 
@@ -67,7 +67,7 @@ Rewards for the epoch in progress are not paid when you unstake partway through 
 
 ## Fees
 
-- **Validator commission:** shown in the key facts table. A commission change on Sui takes effect at the next epoch, and the protocol does not require notice. FP Validated announces planned changes in advance.
+- **Validator commission:** shown in the key facts table. A commission change on Sui takes effect at the next epoch, and the protocol does not require notice.
 - **Gas:** staking and unstaking each cost a small SUI gas fee, paid by your wallet.
 
 ## Risks
@@ -81,7 +81,7 @@ See [Responsiveness and Slashing Policy](/fp-validated-infra/responsiveness-and-
 
 ## Institutional staking
 
-Organizations can stake SUI through the [FP Validated Platform](/platform). The platform builds the unsigned staking or unstaking transaction, your custody signs it, and the platform checks the signed bytes against what it issued before broadcasting once. Approvals, audit records and per-epoch reward reports are available in the console.
+Institutions can stake SUI from custody platforms that support Sui delegation. Contact FP Validated to confirm that our validator is available on your custodian and to arrange reporting.
 
 ## FAQ
 

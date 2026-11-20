@@ -16,8 +16,7 @@ FP Validated runs validators for proof-of-stake networks and accepts delegation 
 | Path | Best for | How it works |
 | --- | --- | --- |
 | Your own wallet | Individuals and small teams | Pick FP Validated in your wallet's staking screen and sign the transaction. Each chain guide below lists the wallets we have checked. |
-| [FP Validated Platform](/platform) | Institutions that need approvals, audit trails and reward statements | The platform prepares an unsigned transaction, your custody signs it, and the platform verifies and broadcasts it once. |
-| Custody platforms | Assets already held at a qualified custodian | Stake from the custodian's console. Contact us to confirm the validator is listed for your custodian. |
+| Custody platforms | Institutions holding assets at a qualified custodian | Stake from the custodian's console. Contact FP Validated to confirm the validator is listed for your custodian. |
 
 ## Chain guides
 
@@ -30,7 +29,7 @@ Every guide uses the same layout: key facts, what you need, how to stake, reward
 ## Risks that apply to every chain
 
 - **Validator performance.** Rewards depend on the validator staying online and following the protocol. Some networks reduce rewards or slash stake when a validator misbehaves. Each guide states the exact rule for that network.
-- **Commission changes.** Validators can change their commission. Each guide links to an explorer that shows the live rate, and FP Validated announces planned changes in advance.
+- **Commission changes.** Validators can change their commission. Each guide links to an explorer that shows the live rate.
 - **Lock-up and liquidity.** Many networks keep staked tokens locked for a period after you unstake. Plan withdrawals around the unstaking period in each guide.
 - **Wallet and signing risk.** Only sign transactions you understand. Check the validator address against this page before you sign.
 
