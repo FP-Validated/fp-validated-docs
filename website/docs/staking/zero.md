@@ -1,18 +1,24 @@
 ---
 title: Stake ZRO
-sidebar_label: LayerZero (Zero)
+sidebar_label: Zero
 sidebar_position: 9
-chain: layerzero
+chain: zero
 status: draft
 last_verified: 2026-11-24
 ---
 
 # Stake ZRO on Zero
 
-Zero is the Layer 1 network built by LayerZero Labs, and ZRO is its staking token. ZRO staking opened on 2026-11-23, before Zero's public launch on 2026-11-30. Staking happens only on the official site, [staking.layerzero.network](https://staking.layerzero.network/).
+Zero is LayerZero's blockchain, built for global markets. Validators secure Zero: they agree on every block, and their votes are weighted by the ZRO staked behind them. FP Validated helps secure Zero as a genesis validator, part of the Zero Genesis Validator Program.
+
+ZRO staking opened on 2026-11-23, ahead of Zero's mainnet on 2026-11-30. Genesis validators produce Zero's first blocks using ZRO staked ahead of mainnet. Staking happens only on LayerZero's official staking site, [staking.layerzero.network](https://staking.layerzero.network/).
+
+:::note[Zero is not the LayerZero messaging protocol]
+This page is about **Zero**, LayerZero's blockchain, and staking ZRO to secure it. It is not about the LayerZero interoperability protocol that connects other chains. That protocol has no ZRO staking, and its verifier role (DVN) is a separate role from validating Zero. FP Validated's LayerZero DVN is unrelated to this page.
+:::
 
 :::info[You cannot choose a validator]
-Until the unlock date, expected by 2027-03-31, stakers cannot pick a validator. LayerZero Labs selects the genesis validators, and every stake is split equally across all of them. Staking through the official site therefore does not delegate to FP Validated or to any other single validator. This page explains how staking works so you can decide whether to stake.
+Until the unlock date, expected by 2027-03-31, stake is spread equally across Zero's genesis validators rather than delegated to a single validator. You cannot pick FP Validated or any other validator when you stake. Staking on the official site still helps secure Zero, and FP Validated is one of the genesis validators your stake is spread across.
 :::
 
 :::caution[Your ZRO is locked until the unlock date]
@@ -24,7 +30,7 @@ From the moment you stake, you cannot unstake, transfer, sell or bridge your ZRO
 | Item | Value |
 | --- | --- |
 | Where to stake | [staking.layerzero.network](https://staking.layerzero.network/) only |
-| Validator choice | None. Stake is split equally across the genesis validators that LayerZero Labs selects |
+| Validator choice | None. Stake is spread equally across Zero's genesis validators until the unlock date |
 | Minimum and maximum | None. You can add to your stake at any time, and adding does not extend the lock-up |
 | Lock-up | Until unstaking is enabled, expected by 2027-03-31. No early exit |
 | Unstaking | Takes up to 7 days once unstaking is enabled |
@@ -77,15 +83,17 @@ Moving ZRO from Zero back to other chains may not be possible until a later netw
 ## Things to know
 
 - **Use only the official site.** Sending ZRO directly to the staking contracts can make it unrecoverable. Do not send ZRO to Zero by other routes before the 2026-11-30 launch. ZRO sent to Zero other than through the staking site is not staked and earns nothing.
-- **No governance votes or ATLAS discounts.** Staked ZRO may not count toward ZRO governance voting, and staking gives no ATLAS trading fee discounts.
+- **No governance votes or ATLAS discounts.** Staked ZRO may not count toward ZRO governance voting, and staking gives no LayerZero ATLAS trading fee discounts.
 - **Contract and launch risk.** The terms say the staking contracts may not have been audited at launch. If Zero's genesis is delayed, your ZRO stays pending and earns no rewards until it is staked.
 - **Price risk.** ZRO's price can fall while it is locked.
 - **Taxes.** Rewards added to a locked stake may be taxable when they are credited, even though you cannot withdraw them.
-- **Scams.** LayerZero Labs says it will never DM you a link or ask for your recovery phrase.
+- **Scams.** LayerZero says it will never DM you a link or ask for your recovery phrase.
 
-## FP Validated and Zero
+## FP Validated on Zero
 
-The genesis validators are selected by LayerZero Labs, and stakers cannot direct stake to a validator until the unlock date. After that date, validators set their own commission, and LayerZero has not yet published how delegation will work. This page will be updated when it does. For questions, see [Need help?](/staking#need-help).
+FP Validated helps secure Zero as a genesis validator, part of the Zero Genesis Validator Program. Validators join through that program, which continues to select new validators, and validation and delegation are due to open up more broadly over time. Until the unlock date, ZRO you stake is spread across all genesis validators, including FP Validated. After that date, each validator sets its own commission. This page will be updated when delegation to a single validator is available. For questions, see [Need help?](/staking#need-help).
+
+FP Validated does not run LayerZero ATLAS. LayerZero ATLAS is the first product on Zero, infrastructure that trading venues build on; FP Validated helps secure the blockchain it runs on.
 
 ## Official references
 

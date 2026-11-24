@@ -32,7 +32,7 @@ FP Validated runs validators for proof-of-stake networks and accepts delegation 
 - **Wait to unstake** is how long your tokens stay locked after you ask for them back. Check it before you stake money you may need at short notice.
 - **Rewards** shows whether rewards are added to your stake by the network or whether you claim them with a transaction.
 
-**LayerZero (Zero):** ZRO staking is open, but until the unlock date, expected by 2027-03-31, stakers cannot choose a validator. Stake is split equally across the genesis validators that LayerZero Labs selects, so it is not in the table above. See [Stake ZRO](/staking/layerzero) for how it works.
+**Zero (ZRO):** FP Validated is a genesis validator on Zero, LayerZero's blockchain. ZRO staking is open through LayerZero's official staking site, but until the unlock date, expected by 2027-03-31, stake is spread equally across Zero's genesis validators rather than delegated to a single validator, so Zero is not in the table above. See [Stake ZRO on Zero](/staking/zero).
 
 Each guide opens with a direct link to FP Validated's validator in that network's official staking app, so you do not have to search a validator list.
 
