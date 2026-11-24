@@ -24,12 +24,15 @@ FP Validated runs validators for proof-of-stake networks and accepts delegation 
 | Initia | INIT | 5% | 21 days | Claim manually | [Stake INIT](/staking/initia) | draft |
 | Aptos | APT | 2% | Up to 14 days | Added to your stake | [Stake APT](/staking/aptos) | draft |
 | Monad | MON | 15% | Several hours | Claim manually | [Stake MON](/staking/monad) | draft |
+| Stacks | STX | 5% | Until the next cycle (~2 weeks) | Claim manually | [Stake STX](/staking/stacks) | draft |
 
 {/* staking-index:end */}
 
 - **Commission** is the share of your staking rewards that the validator keeps. It is never taken from the amount you stake.
 - **Wait to unstake** is how long your tokens stay locked after you ask for them back. Check it before you stake money you may need at short notice.
 - **Rewards** shows whether rewards are added to your stake by the network or whether you claim them with a transaction.
+
+**Zero (ZRO):** FP Validated is a genesis validator on Zero, LayerZero's blockchain. ZRO staking is open through LayerZero's official staking site, but until the unlock date, expected by 2027-03-31, stake is spread equally across Zero's genesis validators rather than delegated to a single validator, so Zero is not in the table above. See [Stake ZRO on Zero](/staking/zero).
 
 Each guide opens with a direct link to FP Validated's validator in that network's official staking app, so you do not have to search a validator list.
 

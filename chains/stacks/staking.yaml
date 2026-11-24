@@ -1,0 +1,37 @@
+# Delegator staking facts for website/docs/staking/stacks.md (scripts/staking-facts.mjs).
+# Stacks PoX-5: stakers name a signer-manager contract in pox-5 `stake`. FP Validated's manager
+# registered signer key 035cbde48e17950bf6091492ce4a8c9270be5badfd769ea0b46d00d1bf36c61c0a on 2026-11-03.
+chain: stacks
+delegationOpen: true
+network: Stacks Mainnet
+token: STX
+validator:
+  name: FP Validated
+  address: "SP2EC646NK42FKRJA69SYCV6FDQN1HJE4FQK9HZ7B.signer-manager"
+  addressLabel: Signer-manager contract
+  explorer: https://explorer.hiro.so/txid/SP2EC646NK42FKRJA69SYCV6FDQN1HJE4FQK9HZ7B.signer-manager?chain=mainnet
+commission:
+  value: "5%"
+  source: contract
+  changeNotice: set in the signer-manager contract with update-fees. The rate for a reward cycle is fixed the first time that cycle's rewards are claimed
+minStake: No protocol minimum per staker. A signer earns rewards only while at least 50,000 STX in total is staked to it
+activation: The lock starts at the next reward cycle. A cycle is 2,100 Bitcoin blocks (about two weeks). Staking is rejected in the last 100 Bitcoin blocks of a cycle
+unbonding: You pick a lock of 1 to 96 cycles. You can also unstake outside the last 100 Bitcoin blocks of a cycle; your STX then unlocks at the start of the next cycle
+unbondingShort: Until the next cycle (~2 weeks)
+rewardFrequency: Distributed every 1,050 Bitcoin blocks (about a week), paid in sBTC, or in BTC if you set a Bitcoin payout address
+autoCompound: false
+penalties: No slashing. If the signer fails to sign, rewards are lost; your STX is not
+wallets:
+  - name: Leather (Bring your own signer manager)
+    type: dapp
+    url: https://app.leather.io/staking/pool/byosm
+  - name: Leather wallet
+    type: extension
+    url: https://leather.io
+sources:
+  - https://docs.stacks.co/operate/staking-stx
+  - https://docs.stacks.co/operate/staking-stx/stack-with-a-pool
+  - https://docs.stacks.co/learn/block-production/staking
+  - https://docs.stacks.co/learn/block-production/signing
+  - https://docs.stacks.co/operate/take-a-signer-fee
+lastVerified: 2026-11-24
