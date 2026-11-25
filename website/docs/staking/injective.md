@@ -1,7 +1,7 @@
 ---
 title: Stake INJ
 sidebar_label: Injective
-sidebar_position: 4
+sidebar_position: 3
 chain: injective
 status: draft
 last_verified: 2026-11-20

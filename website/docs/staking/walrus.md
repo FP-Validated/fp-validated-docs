@@ -1,7 +1,7 @@
 ---
 title: Stake WAL
 sidebar_label: Walrus
-sidebar_position: 2
+sidebar_position: 8
 chain: walrus
 status: draft
 last_verified: 2026-11-20

@@ -1,7 +1,7 @@
 ---
 title: Stake MON
 sidebar_label: Monad
-sidebar_position: 7
+sidebar_position: 4
 chain: monad
 status: draft
 last_verified: 2026-11-20

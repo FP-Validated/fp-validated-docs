@@ -1,7 +1,7 @@
 ---
 title: Stake STX
 sidebar_label: Stacks
-sidebar_position: 8
+sidebar_position: 6
 chain: stacks
 status: draft
 last_verified: 2026-11-24

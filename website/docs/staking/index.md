@@ -17,14 +17,14 @@ FP Validated runs validators for proof-of-stake networks and accepts delegation 
 
 | Network | Token | Commission | Wait to unstake | Rewards | Guide | Guide status |
 | --- | --- | --- | --- | --- | --- | --- |
+| Aptos | APT | 2% | Up to 14 days | Added to your stake | [Stake APT](/staking/aptos) | draft |
+| Initia | INIT | 5% | 21 days | Claim manually | [Stake INIT](/staking/initia) | draft |
+| Injective | INJ | 10% | 21 days | Claim manually | [Stake INJ](/staking/injective) | draft |
+| Monad | MON | 15% | Several hours | Claim manually | [Stake MON](/staking/monad) | draft |
+| Sei | SEI | 5% | 21 days | Claim manually | [Stake SEI](/staking/sei) | draft |
+| Stacks | STX | 5% | Until the next cycle (~2 weeks) | Claim manually | [Stake STX](/staking/stacks) | draft |
 | Sui | SUI | 11% | None | Added to your stake | [Stake SUI](/staking/sui) | draft |
 | Walrus | WAL | 60% | 1 to 4 weeks | Added to your stake | [Stake WAL](/staking/walrus) | draft |
-| Sei | SEI | 5% | 21 days | Claim manually | [Stake SEI](/staking/sei) | draft |
-| Injective | INJ | 10% | 21 days | Claim manually | [Stake INJ](/staking/injective) | draft |
-| Initia | INIT | 5% | 21 days | Claim manually | [Stake INIT](/staking/initia) | draft |
-| Aptos | APT | 2% | Up to 14 days | Added to your stake | [Stake APT](/staking/aptos) | draft |
-| Monad | MON | 15% | Several hours | Claim manually | [Stake MON](/staking/monad) | draft |
-| Stacks | STX | 5% | Until the next cycle (~2 weeks) | Claim manually | [Stake STX](/staking/stacks) | draft |
 
 {/* staking-index:end */}
 
