@@ -1,7 +1,7 @@
 ---
 title: Stake SUI
 sidebar_label: Sui
-sidebar_position: 1
+sidebar_position: 7
 chain: sui
 status: draft
 last_verified: 2026-11-20

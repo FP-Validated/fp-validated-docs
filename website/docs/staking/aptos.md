@@ -1,7 +1,7 @@
 ---
 title: Stake APT
 sidebar_label: Aptos
-sidebar_position: 6
+sidebar_position: 1
 chain: aptos
 status: draft
 last_verified: 2026-11-20

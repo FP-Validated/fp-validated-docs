@@ -1,7 +1,7 @@
 ---
 title: Stake SEI
 sidebar_label: Sei
-sidebar_position: 3
+sidebar_position: 5
 chain: sei
 status: draft
 last_verified: 2026-11-20

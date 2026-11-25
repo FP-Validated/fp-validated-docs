@@ -1,7 +1,7 @@
 ---
 title: Stake INIT
 sidebar_label: Initia
-sidebar_position: 5
+sidebar_position: 2
 chain: initia
 status: draft
 last_verified: 2026-11-20
