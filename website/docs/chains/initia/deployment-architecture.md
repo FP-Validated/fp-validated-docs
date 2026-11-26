@@ -1,51 +1,39 @@
 ---
 title: Initia Deployment Architecture
 sidebar_position: 1
-last_verified: 2026-05-29
+last_verified: 2026-11-26
 ---
 
 # Initia Deployment Architecture
 
-Initia uses an active validator plus three Horcrux signer overlays with explicit active-validator topology.
+We run the Initia mainnet validator as a single workload that follows the [shared deployment pattern](/chains/shared-kubernetes/argocd-and-values-pattern). It signs with a local signer and runs the oracle sidecar that Initia validators need.
 
-## Deployed roles
+## How it is run
 
-| Role | File | Placement | Notes |
-| --- | --- | --- | --- |
-| Active validator | `variables/initia/validator-01.yaml` | `dedicated Kubernetes node` | `validatorRole: active`; `topology.activeValidator` set. |
-| Horcrux signer 1 | `variables/initia/horcrux-01.yaml` | `dedicated Kubernetes node` | Per-ordinal share/ECIES Vault refs. |
-| Horcrux signer 2 | `variables/initia/horcrux-02.yaml` | `dedicated Kubernetes node` | Per-ordinal share/ECIES Vault refs. |
-| Horcrux signer 3 | `variables/initia/horcrux-03.yaml` | `dedicated Kubernetes node` | Co-located with validator; port checks are mandatory. |
-
-## Chain defaults
-
-`variables/initia/common-values.yaml` defines:
-
-- chain ID: `interwoven-1`.
-- host storage path: `persistent data directory` with 2Ti intent.
-- bootstrap genesis, snapshot, seed, and peer URLs.
-- preparer enabled.
-- Horcrux quorum and explicit `chainNodes` target service.
-
-## Bind vs advertise
-
-`validator-01.yaml` carries explicit `bind_ip` and `advertise_ip` values. Keep this distinction visible in the guide:
-
-| Field | Meaning |
+| Topic | Approach |
 | --- | --- |
-| `bind_ip` | Where the pod/node listens. |
-| `advertise_ip` | What peers or signers should connect to. |
-| `topology.activeValidator` | The only validator expected to sign in the active topology. |
+| Roles | One validator. The same node is first brought up as a sync-only node and switched to signing in a separate change. |
+| Signing | Local signer. One active instance, with no automatic failover. |
+| Oracle sidecar | Runs next to the validator, at a pinned version. Its connection to the node is local-only. |
+| Client version | The official Initia release, pinned. A binary taken from a release carries the publisher's checksum. |
+| Data | A retained volume that survives redeployment. |
 
-## Template behavior
+## Network exposure
 
-`charts/chain-templates/templates/initia.yaml` renders host-network validator behavior and a Horcrux handshake retry loop. `initia-horcrux.yaml` renders host-network signer pods and exposes the cosigner port only. The template rejects ambiguous `chainNodes` versus validator advertise/private IP hints.
+| Endpoint | State |
+| --- | --- |
+| P2P | Public. |
+| Metrics | Private, read by monitoring only. |
+| RPC, REST, and gRPC | Off or local-only on the validator. |
 
-## Preflight checklist
+## Moving the validator
 
-- [ ] Confirm `validatorRole: active` is intentional.
-- [ ] Confirm `topology.activeValidator` points at the same validator overlay.
-- [ ] Confirm bind and advertise IPs match node routing.
-- [ ] Confirm Horcrux `chainNodes` target resolves before validator sync.
-- [ ] Confirm the shard filename uses the chain ID expected by tests.
-- [ ] Confirm preparer and legacy upgrade sync behavior are both understood before upgrade windows.
+When the validator moves to another host, the old instance is stopped and confirmed gone, its final signer state is handed over, and the new instance compares that state with the chain before it signs.
+
+## Before a change
+
+- [ ] The change has been rendered and read.
+- [ ] The node's role is the intended one: sync-only or signing.
+- [ ] The secrets the node needs are ready.
+- [ ] No other instance of this validator is running anywhere.
+- [ ] Upcoming chain upgrades have been checked.

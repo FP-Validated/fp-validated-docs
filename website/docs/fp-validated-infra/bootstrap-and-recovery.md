@@ -1,71 +1,62 @@
 ---
-title: Bootstrap and Recovery Runbook
+title: Bootstrap and Recovery
 sidebar_position: 6
-last_verified: 2026-05-29
+last_verified: 2026-11-26
 ---
 
-# Bootstrap and Recovery Runbook
+# Bootstrap and Recovery
 
-This public runbook summarizes the gates FP Validated uses when building or recovering Kubernetes-based infrastructure.
+The platform is built in layers, and it is restored in the same order, because each layer depends on the ones before it. Step-by-step procedures are kept private.
 
 ```mermaid
 flowchart TB
-  network[Network and Private Access]
-  cluster[Kubernetes Cluster]
-  gitops[GitOps Controller]
-  secrets[Vault and External Secrets]
-  access[Identity and RBAC]
-  obs[Observability]
-  workloads[Workloads]
-  evidence[Evidence]
+  network[Private network and access]
+  deploy[Deployment from Git]
+  secrets[Secrets]
+  identity[Identity and sign-on]
+  monitoring[Monitoring]
+  chainsec[Chain secrets]
+  chains[Chain workloads]
 
-  network --> cluster
-  cluster --> gitops
-  gitops --> secrets
-  secrets --> access
-  access --> obs
-  obs --> workloads
-  workloads --> evidence
+  network --> deploy
+  deploy --> secrets
+  secrets --> identity
+  identity --> monitoring
+  monitoring --> chainsec
+  chainsec --> chains
 ```
 
-## Bootstrap phases
+## Build order
 
-1. **Network gate** — private management access and DNS/proxy assumptions are validated without publishing internal topology.
-2. **Cluster gate** — base cluster comes up with minimal dependencies.
-3. **GitOps gate** — ArgoCD is installed and points only at the intended app root.
-4. **Secrets gate** — Vault and External Secrets are initialized through manual approval steps.
-5. **Access gate** — identity-aware ingress and RBAC are validated before exposing management UIs.
-6. **Observability gate** — Prometheus/Grafana/Alertmanager and node agents are deployed before production workloads are considered healthy.
-7. **Workload gate** — chain and service workloads sync only after monitoring and secret delivery are proven.
-8. **Evidence gate** — screenshots/logs/manifests are collected for operational proof.
+1. Private network and operator access.
+2. Deployment from Git.
+3. Secrets.
+4. Identity and sign-on.
+5. Monitoring.
+6. For each chain, its secrets.
+7. Chain workloads: nodes first, then signers.
+
+Each layer is confirmed healthy before the next one is started. A validator is first deployed as a node that does not sign, and it is switched to signing in a separate change once it has caught up with the chain.
 
 ## Recovery principles
 
-- Keep management and validator planes independently recoverable.
-- Rebuild management services without taking over validator workloads automatically.
-- Restore secrets from approved secure processes only.
-- Prefer phase-by-phase recovery over broad cluster-wide changes.
-- Capture evidence before and after recovery.
-- Prefer GitOps/API recovery over direct server access.
-- Do not publish command transcripts that reveal private topology or credentials.
+- Fix the lowest broken layer first. A workload problem that is really a secrets problem is fixed at the secrets layer.
+- Restoring control services does not touch chain workloads. They keep running without them, as described in the [overview](/fp-validated-infra/overview#when-control-services-are-unavailable).
+- Recover through Git where possible. A manual change made during an incident is written back to Git afterwards.
+- Chain data is retained. Removing a workload does not delete its data.
+- Do not start risky changes while monitoring is down. Check chains from external sources until it is back.
+- Signing safety outranks availability during recovery, the same as in normal operation. Before a signer starts in a new place, the old instance is confirmed gone.
 
-## Recovery matrix
+## What recovery depends on
 
-| Failure area | First response | Recovery boundary |
-| --- | --- | --- |
-| Management UI unavailable | Verify private access, ingress, identity, and service health. | Do not mutate validator workloads while restoring UI access. |
-| GitOps controller degraded | Freeze non-emergency deployments and restore controller health. | Avoid manual drift except documented break-glass actions. |
-| Secret delivery issue | Stop affected rollout and validate External Secrets/Vault integration. | Never paste secrets into manifests or docs. |
-| Observability gap | Restore exporter/scrape/dashboard pipeline. | Do not declare workload healthy without independent evidence. |
-| Chain workload degraded | Follow chain-specific runbook. | Signing safety overrides availability. |
-| Product workload degraded | Roll back image or manifest through ArgoCD/Kubernetes API. | No routine SSH-based patching. |
+| Item | Where it comes from |
+| --- | --- |
+| Cluster and application definitions | Git. |
+| Secrets | The secrets manager. The few values needed before it exists are kept separately, outside Git. |
+| Chain data | Retained volumes. A lost node is rebuilt from the chain's snapshot or state sync, not from our own copy. |
+| Signer state | Handed over explicitly when a validator moves, and checked against the chain before the new instance signs. |
 
-## What external readers should learn
+## Related
 
-FP Validated's recovery model is not "restart everything." It is dependency-aware:
-
-```text
-Access → GitOps → Secrets → Observability → Workloads → Evidence
-```
-
-That ordering keeps recovery auditable and reduces the chance that a management-plane issue becomes a validator safety incident.
+- [FP Validated Infrastructure Overview](/fp-validated-infra/overview)
+- [GitOps Topology](/fp-validated-infra/gitops-topology)

@@ -21,7 +21,7 @@ The Sei node architecture is documented at the role level, not at the private se
 
 ## Safety model
 
-Sei operations prioritize Horcrux remote signing and Kubernetes deployment. Public docs intentionally avoid exact topology, private host paths, node names, and secret paths.
+Sei operations prioritize a single active signer and a controlled handover when the validator moves. Public docs intentionally avoid exact topology, private host paths, node names, and secret paths.
 
 ## Architecture diagram
 

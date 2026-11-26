@@ -1,98 +1,68 @@
 ---
 title: Access and Secrets Model
 sidebar_position: 3
-last_verified: 2026-07-03
+last_verified: 2026-11-26
 ---
 
 # Access and Secrets Model
 
-The public principle is straightforward: operators access management systems through controlled identity paths, while workloads receive secrets only through scoped runtime delivery.
+People and workloads use different identities. An operator signs in as a person and is authorized by group. A workload reads its secrets as itself, and that identity cannot sign in to any management service.
 
 ```mermaid
 flowchart LR
-  user[Human Operator]
-  idp[Identity Provider]
-  gateway[Private Management Gateway]
-  ui[Management UIs]
-  api[Guard and Kubernetes APIs]
-  vault[Vault]
-  eso[External Secrets]
-  workload[Workloads]
+  user[Operator]
+  net[Private network]
+  sso[Single sign-on with MFA]
+  guard[FP Validated Guard]
+  cluster[Clusters]
+  store[Secrets manager]
+  workload[Workload]
 
-  user --> idp
-  idp --> gateway
-  gateway --> ui
-  gateway --> api
-  vault --> eso
-  eso --> workload
-  api --> workload
+  user --> net
+  net --> sso
+  sso --> guard
+  guard --> cluster
+  store -- scoped, read-only --> workload
 ```
 
-## Access model
+## Operator access
 
-Management UIs such as ArgoCD, Grafana, Prometheus, Alertmanager, Vault, Authentik-backed access flows, and platform APIs are not designed as public unauthenticated endpoints. The live platform uses:
-
-- private or identity-aware management access paths,
-- Authentik/OIDC style authentication,
-- baseline RBAC that avoids default Secret read access,
-- domain-separated permissions for platform, observability, access, and security roles,
-- Vault + External Secrets for runtime secret delivery rather than manual secret copying.
-
-## No routine server login
-
-A core FP Validated operating principle is that product and operations work should be possible without direct login to production servers.
-
-For example, a dashboard-style product deployment follows this pattern:
-
-1. Build and validate the application outside the server.
-2. Publish an immutable container image.
-3. Update the desired Kubernetes deployment state.
-4. Let ArgoCD/Kubernetes reconcile the rollout.
-5. Verify readiness, ingress, logs, and health checks externally.
-
-This separates authority:
-
-| Actor | Capability |
+| Principle | What it means in practice |
 | --- | --- |
-| Developer | Propose code and image changes. |
-| Platform operator | Approve deployment state and rollout. |
-| Observability role | Read dashboards, alerts, and health reports. |
-| Guard service | Perform scoped operational actions through API controls. |
-| Secret controller | Inject secrets into workloads without exposing values to users. |
+| No public management endpoints. | Management services are reachable only from a private network. |
+| One identity per person, with MFA. | Every operator signs in through single sign-on. MFA is mandatory, and a passkey or hardware key is preferred. |
+| Authorization by group. | What a person can do in each service follows from group membership. Read access and administration are separate groups. |
+| Administrator access is the exception. | The administrator group is small and is meant for break-glass use. |
+| Routine work goes through Guard. | Operators do not run commands against the clusters directly for day-to-day work. They use [FP Validated Guard](/fp-validated-infra/fp-validated-guard), which adds permission levels, approval for dangerous actions, secret masking, and an audit log. |
+| Direct host access is a break-glass path. | It is used when the cluster itself is unavailable or a host needs repair below Kubernetes. |
 
-## Secrets model
+## Secrets
 
-Vault and External Secrets are used as the runtime secret delivery pattern. Public docs should describe secret *classes*, not secret values or exact paths.
-
-| Secret class | Example use |
+| Principle | What it means in practice |
 | --- | --- |
-| Cluster bootstrap secret | Initial platform bootstrap and recovery. |
-| Application credential | Database, webhook, or API integration credential. |
-| Validator key material | Node key, signer shard, validator key, or slashing database credential. |
-| TLS / ingress material | Management UI or service ingress identity. |
+| One place for secrets. | Keys and credentials are stored in a central secrets manager. They are never in Git or in configuration values. |
+| Delivered, not fetched by hand. | A workload receives its secrets through an automated path that authenticates as the workload's own namespace. No long-lived token is handed to a workload. |
+| Scoped to one chain and network. | Each chain namespace can read its own secrets and nothing else. Access is read-only. |
+| Testnet and mainnet are separate. | They use separate namespaces and separate secrets, so a testnet workload cannot pick up a mainnet key by mistake. |
+| Fail closed. | A workload whose secret is missing does not start. Nothing generates a placeholder key. |
+| Some keys are not readable by any single system. | Where a chain's signer supports it, the key is kept in a key management service that signs without releasing the key, or it is split so that no single place holds it whole. |
 
-## Public redaction policy
+## What these docs leave out
 
-Never publish:
+This site does not publish:
 
-- exact public/private IPs or CIDRs,
-- node hostnames,
-- VPN peer configuration,
-- Vault unseal/root/bootstrap procedure details,
-- Vault paths that reveal production key layout,
-- kubeconfig contents or file paths,
-- OIDC client secrets,
-- webhook URLs or auth headers,
-- rendered Kubernetes Secret payloads,
-- exact backend service targets for private UIs.
+- IP addresses and network ranges
+- node names and private hostnames
+- VPN configuration
+- secret paths, role names, and policy contents
+- recovery and bootstrap procedures for the secrets manager
+- cluster credentials and their locations
+- client secrets, webhook URLs, and auth headers
+- the contents of any Kubernetes Secret
+- addresses of private management services
 
-## What can be public
+## Related
 
-It is safe to describe:
-
-- that Vault + External Secrets is used,
-- that identity-aware ingress protects management UIs,
-- that human access is role-scoped,
-- that baseline roles avoid Secret read access,
-- that signing secrets fail closed when missing or inconsistent,
-- that routine operations happen through GitOps, Guard, and observability surfaces rather than direct server login.
+- [FP Validated Guard](/fp-validated-infra/fp-validated-guard)
+- [GitOps Topology](/fp-validated-infra/gitops-topology)
+- [Ports and Secrets Contract](/chains/shared-kubernetes/ports-and-secrets-contract)

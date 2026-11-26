@@ -1,57 +1,37 @@
 ---
 title: Stable Deployment Architecture
 sidebar_position: 1
-last_verified: 2026-05-29
+last_verified: 2026-11-26
 ---
 
 # Stable Deployment Architecture
 
-Stable combines a Cosmos validator, Horcrux remote signing, Stable-specific EVM endpoints, and stablevisor runtime management.
+We run Stable as a validator with a threshold signer. The validator key is split into shares, and a quorum of signers must agree before a block is signed, so the key never exists in one piece on the validator. The setup follows the [shared deployment pattern](/chains/shared-kubernetes/argocd-and-values-pattern).
 
-## Deployed roles
+## How it is run
 
-| Role | File | Placement | Notes |
-| --- | --- | --- | --- |
-| Validator | `variables/stable/validator-01.yaml` | `dedicated Kubernetes node` | Horcrux-enabled validator; node key sourced from the Stable validator node-secret path. |
-| Horcrux signer 1 | `variables/stable/horcrux-01.yaml` | `dedicated Kubernetes node` | Per-ordinal Vault shard/ECIES. |
-| Horcrux signer 2 | `variables/stable/horcrux-02.yaml` | `dedicated Kubernetes node` | Per-ordinal Vault shard/ECIES. |
-| Horcrux signer 3 | `variables/stable/horcrux-03.yaml` | `dedicated Kubernetes node` | Co-located signer overlay; requires careful port review. |
-
-## Runtime model
-
-`variables/stable/common-values.yaml` enables stablevisor and defines:
-
-- hostPath cutover reuse at `data directory/stable`.
-- Horcrux `signer_port: 1534` and `cosigner_port: 2522`.
-- chain node target service for remote signing.
-- backup job intent and backup secret.
-- Stable EVM RPC and WebSocket endpoints in addition to Cosmos RPC/API/gRPC.
-
-The chart template (`charts/chain-templates/templates/stable.yaml`) renders:
-
-- host-network validator deployment.
-- Stablevisor execution path when enabled.
-- P2P, RPC, API, gRPC, gRPC-web, EVM, and native Prometheus ports.
-- Horcrux handshake retry logic before validator startup in remote signer mode.
-
-## Exposure policy
-
-Do not treat EVM RPC/WebSocket as automatically public. Document whether each endpoint is:
-
-| Endpoint class | Default posture |
+| Topic | Approach |
 | --- | --- |
-| P2P | Public only when required by the chain. |
-| Cosmos RPC/API/gRPC | Private or gatewayed unless explicitly approved. |
-| EVM RPC/WebSocket | Private or rate-limited gateway; never expose validator internals directly. |
-| Prometheus | Private cluster/monitoring network only. |
-| Horcrux signer/cosigner | Private only. |
+| Roles | One validator and its signers. Each is deployed and changed on its own. |
+| Signing | Threshold signer. The validator holds no validator key. |
+| Client version | A pinned release, managed by the chain's upgrade manager. |
+| Chain upgrades | Each on-chain upgrade is declared ahead of its height, with the source of the new binary. |
+| Data | Retained across redeployment. |
 
-## Cutover checklist
+## Network exposure
 
-- [ ] Validate `common-values.yaml` stablevisor settings.
-- [ ] Confirm the validator overlay is Horcrux-enabled.
-- [ ] Confirm the node key Vault path exists.
-- [ ] Confirm each Horcrux overlay has shard and ECIES remote refs.
-- [ ] Confirm `data directory/stable` data reuse path before sync.
-- [ ] Confirm backup secret and destination before migration.
-- [ ] Follow the Stable migration runbook for systemd → Kubernetes cutover.
+| Endpoint | State |
+| --- | --- |
+| P2P | Public. |
+| Metrics | Private, read by monitoring only. |
+| Cosmos RPC, REST, and gRPC | Private. |
+| EVM RPC and WebSocket | Private. Public access, where offered, goes through a gateway and never reaches the validator directly. |
+| Signer ports | Private. |
+
+## Before a change
+
+- [ ] The change has been rendered and read.
+- [ ] The validator uses the threshold signer and references no validator key.
+- [ ] Each signer's secrets are ready.
+- [ ] The signers are started before the validator.
+- [ ] When moving hosts, the same workload has exited in its old location first.

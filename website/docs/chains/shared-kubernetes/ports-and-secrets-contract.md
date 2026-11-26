@@ -1,56 +1,56 @@
 ---
 title: Ports and Secrets Contract
 sidebar_position: 2
-last_verified: 2026-07-03
+last_verified: 2026-11-26
 ---
 
 # Ports and Secrets Contract
 
-Production chain guides must document two public-safe contracts before deployment: host-network ports and runtime secret path conventions.
-## Port governance
+Two things are settled before a chain workload is started: which ports it uses and who can reach them, and which secrets must already exist.
 
-Cosmos-style validators in `chain deployment repository` use `hostNetwork: true`; port collisions happen at the node level, not only inside Kubernetes. The repo therefore uses a canonical base plus per-chain offset model.
+## Ports
 
-| Chain | Offset / note | Operational implication |
-| --- | --- | --- |
-| Sei production | Offset `0` | Uses the base Cosmos/Horcrux allocation. |
-| Initia production | Offset `200` | Avoids collisions with other host-network validators. |
-| Stable production | Offset `300` | Includes Cosmos API/gRPC plus Stable EVM RPC/WebSocket surfaces. |
-| Canton | Exempt | Not modeled as host-network validator ports in the same registry. |
-| Walrus test environment | Exemption note in registry | Treat public exposure separately from validator host-port governance. |
+| Rule | Reason |
+| --- | --- |
+| Ports are allocated per chain and written in one place. | Workloads that share a host must not collide, and the allocation should be readable without searching. |
+| Only P2P is open to the internet, plus a service port where the protocol needs one. | Everything else is reached inside the cluster. |
+| RPC, REST, and gRPC on a validator are off or bound to the local interface. | A validator is not an API server. |
+| Public HTTP endpoints go through a gateway with TLS. | A node port is never published directly. See [RPC Exposure Policy](/operations/rpc-exposure-policy). |
+| Metrics are private. | Only the monitoring system can reach a metrics port. |
+| Signer ports are private. | They are never opened in a firewall or load balancer. |
 
-For every new chain guide, include a port table with: P2P, RPC, REST/API, gRPC, WebSocket, Prometheus, signer, cosigner, and any chain-specific EVM or service ports.
+For a new chain guide, list the ports by purpose: P2P, RPC, REST or API, gRPC, WebSocket, metrics, signer, and anything chain-specific.
 
-## ExternalSecret contract
+## Secrets
 
-Vault and External Secrets remain the default runtime secret-delivery pattern. Public docs may publish the *path convention* and *secret class* so operators know what must exist before rollout, but they must never publish secret values, private key material, live credential payloads, or unredacted secret exports.
+Secrets come from the secrets manager through an automated delivery path. See [Access and Secrets Model](/fp-validated-infra/access-and-secrets#secrets).
 
-Cosmos-style chains share the same public-safe secret classes:
+| Secret class | Needed when |
+| --- | --- |
+| Node identity | The node must keep the same peer identity across restarts. |
+| Validator key and last signed state | The node signs with a local signer. |
+| Signer key share | The chain uses threshold signing. |
+| Validator keystores | Keys are served by a remote signer. |
+| Component auth secret | Two components authenticate to each other, such as an execution and consensus client pair. |
+| Registry pull credential | The image is private. |
 
-| Secret class | Used by | Required when |
-| --- | --- | --- |
-| Node identity secret | Validator/full node | Node has persistent identity. |
-| Local validator signing secret/state | Validator | `signerMode: local`. |
-| Distributed signer shard + recovery material | Horcrux-style signer | `signerMode: horcrux` or signer overlay. |
-| Sign-state recovery material | Recovery flow | Sign-state restoration/cutover. |
-| JWT / client auth secret | Internal service handoff | Consensus/execution or gateway/API authentication is enabled. |
+A guide may name a secret class and say when it is needed. It does not include secret paths, values, or exports.
 
-The standardized Horcrux sign-state path format is:
+## Signer modes
 
-```text
-<protocol>/<network>/horcrux/sign-state/<chain-id>/shards/<ordinal>
-```
+| Mode | How it signs |
+| --- | --- |
+| Local signer | The validator process holds the key. Its last signed state is handed over explicitly when the validator moves. |
+| Threshold signer | The key is split into shares, and a quorum of signers must agree. |
+| Remote signer | A signing service holds the keys and keeps a slashing-protection record. The validator client asks it to sign. |
+| Distributed validator | Several operators each hold a share and sign as a committee. |
+| Key management service | The key stays inside the service, which signs on request. |
 
-The signer-set ID format is:
+Which mode a chain uses depends on what its client supports and on what we judge safest for that chain.
 
-```text
-<protocol>/<network>/<chain-id>/horcrux
-```
-
-Public guides may show path conventions and placeholder examples such as `remoteKey=REPLACE_ME`, but they must not publish actual secret values, live credential payloads, or unredacted backup material.
 ## Fail-closed rules
 
-- A missing Vault key should block rollout; do not generate placeholder signing material.
-- A signer or cosigner path mismatch is an incident, not a warning.
-- Ambiguous validator activity should result in no validator signing rather than two validators signing.
-- ExternalSecret deletion policy should retain backing secret material unless an explicit key-rotation runbook says otherwise.
+- A missing secret blocks the rollout. Nothing generates a placeholder key.
+- A mismatch between a signer and the validator it signs for is an incident, not a warning.
+- If it is unclear which instance is active, none signs until it is resolved.
+- Signing workloads are replaced, not rolled: the old one stops before the new one starts.

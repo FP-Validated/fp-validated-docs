@@ -1,19 +1,20 @@
 ---
 title: Supported Chains
 sidebar_position: 2
-last_verified: 2026-05-28
+last_verified: 2026-11-26
 ---
 
 # Supported chains
 
-The MVP covers four chains. Each links to its full chain guide.
+Chain documentation comes in three depths.
 
-| Chain | Category | Primary interfaces | Status |
-| --- | --- | --- | --- |
-| [Ethereum / EVM](/chains/ethereum/overview) | EVM | JSON-RPC HTTP, JSON-RPC WebSocket, Beacon API | draft |
-| [Sui](/chains/sui/overview) | MoveVM | gRPC, GraphQL RPC (JSON-RPC deprecated) | draft |
-| [Aptos](/chains/aptos/overview) | MoveVM | Fullnode REST, Indexer GraphQL, Transaction Stream gRPC | draft |
-| [Solana / Agave](/chains/solana/overview) | SVM | JSON-RPC HTTP, WebSocket PubSub | draft |
+| Depth | Chains | What you get |
+| --- | --- | --- |
+| Full developer and operations guide | [Ethereum](/chains/ethereum/overview), [Sui](/chains/sui/overview), [Aptos](/chains/aptos/overview), [Solana](/chains/solana/overview) | Node architecture, deployment, developer interfaces with an RPC matrix, samples, operations, and reference. Status is `draft` until verified. |
+| Kubernetes deployment pattern | [Sei](/chains/sei/deployment-architecture), [Stable](/chains/stable/deployment-architecture), [Initia](/chains/initia/deployment-architecture), [Walrus](/chains/walrus/overview), [Canton](/chains/canton/overview) | How the validator or storage node is declared: roles, values files, signer mode, ports. |
+| Listed support | See [Chains Overview](/chains#additional-supported-networks) | Support class only, with a link to the staking guide where one exists. |
+
+The full list with node types and interfaces is in the [Chain Matrix](/reference/chain-matrix). Delegators looking for how to stake should start at [Staking](/staking).
 
 ## Adding more chains
 

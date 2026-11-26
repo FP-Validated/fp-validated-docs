@@ -1,56 +1,38 @@
 ---
 title: Sei Deployment Architecture
 sidebar_position: 1
-last_verified: 2026-05-29
+last_verified: 2026-11-26
 ---
 
 # Sei Deployment Architecture
 
-Sei uses a Cosmos-style validator deployment backed by `charts/chain-templates` and `variables/sei` in `chain deployment repository`.
+We run the Sei mainnet validator as a single workload that follows the [shared deployment pattern](/chains/shared-kubernetes/argocd-and-values-pattern). It signs with a local signer.
 
-## Deployed roles
+## How it is run
 
-| Role | File | Node placement | Notes |
-| --- | --- | --- | --- |
-| Validator | `variables/sei/validator-01.yaml` | `dedicated Kubernetes node` | `server_type: validator`, currently `signerMode: local`, uses hostPath reuse from `persistent chain data directory`. |
-| Horcrux signer 1 | `variables/sei/horcrux-01.yaml` | `dedicated Kubernetes node` | v3 cosigner overlay with Vault shard/ECIES refs. |
-| Horcrux signer 2 | `variables/sei/horcrux-02.yaml` | `dedicated Kubernetes node` | v3 cosigner overlay with ordinal-specific Vault refs. |
-| Horcrux signer 3 | `variables/sei/horcrux-03.yaml` | `dedicated Kubernetes node` | v3 cosigner overlay with ordinal-specific Vault refs. |
+| Topic | Approach |
+| --- | --- |
+| Roles | One validator. The same node is first brought up as a sync-only node and switched to signing in a separate change. |
+| Signing | Local signer. One active instance, with no automatic failover. |
+| Client version | The official Sei release, pinned. A new version is a reviewed change. |
+| Chain upgrades | Each on-chain upgrade is declared ahead of its height, with the source of the new binary. |
+| Data | A retained volume that survives redeployment. |
 
-## Common values to review first
+## Network exposure
 
-`variables/sei/common-values.yaml` sets the chain identity and default runtime profile:
+| Endpoint | State |
+| --- | --- |
+| P2P | Public. |
+| Metrics | Private, read by monitoring only. |
+| RPC, REST, gRPC, and EVM endpoints | Off or local-only on the validator. |
 
-- chain ID: `pacific-1`.
-- storage intent: 2Ti host-backed storage.
-- preparer enabled.
-- Sei runtime image: `ghcr.io/sei-protocol/sei:v6.5.0` from the validator overlay.
-- baseline ports from the shared port registry.
+## Moving the validator
 
-## Validator-specific behavior
+With a local signer, the last signed height is part of the validator's identity. When the validator moves to another host, the old instance is stopped and confirmed gone, its final signer state is handed over, and the new instance compares that state with the chain before it signs.
 
-The validator template (`charts/chain-templates/templates/sei.yaml`) renders a host-network workload. That means:
+## Before a change
 
-1. Every exposed port must be checked against `docs/port-registry.md`.
-2. The node-level filesystem path is part of the deployment contract.
-3. Rollback must preserve both data directory and signer state.
-
-The current validator overlay uses:
-
-- high resource profile: CPU `16`, memory `100`, no limits.
-- hostPath migration/reuse: `persistent chain data directory`.
-- Vault refs for node key and local priv-validator key/state.
-- endpoint overrides that enable EVM HTTP/WebSocket surfaces.
-
-## Signer migration note
-
-The presence of Horcrux overlays does not by itself mean the validator is already signing through Horcrux. `validator-01.yaml` is the current source for `signerMode`; document cutover state explicitly before syncing signer-related changes.
-
-## Preflight checklist
-
-- [ ] Render the Sei Applications locally.
-- [ ] Confirm `signerMode` in `validator-01.yaml` matches the intended state.
-- [ ] Confirm Vault paths for node key and local signer state exist.
-- [ ] Confirm Horcrux shard/ECIES paths for all three signer overlays exist before Horcrux cutover.
-- [ ] Confirm the persistent chain data directory exists on the scheduled Kubernetes node and matches expected ownership.
-- [ ] Confirm host-network ports are free on validator and signer nodes.
+- [ ] The change has been rendered and read.
+- [ ] The node's role is the intended one: sync-only or signing.
+- [ ] The secrets the node needs are ready.
+- [ ] No other instance of this validator is running anywhere.

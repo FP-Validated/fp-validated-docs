@@ -1,7 +1,7 @@
 ---
 title: Monitoring Standards
 sidebar_position: 2
-last_verified: 2026-05-28
+last_verified: 2026-11-26
 ---
 
 Monitoring must show whether a node is alive, in consensus with the network, useful to clients, and safe to operate. Every production deployment should export Prometheus metrics and have Grafana dashboards for chain health, RPC health, and host resources.
@@ -36,23 +36,26 @@ Build dashboards from the operator question outward: "Is the fleet healthy?", "I
 Every node should provide:
 
 - A private metrics endpoint reachable only by Prometheus.
-- Labels for chain, network, node role, runtime, region, and instance.
-- Recording rules for sync lag, RPC latency buckets, RPC error ratio, and peer count.
+- Labels for chain, network, node, role, and component, and an explicit switch that decides whether the target can fire alerts.
+- Alert rules written against the client's own metric names, so a rule can be checked against the client's documentation.
 - Grafana panels for node state, RPC health, host resources, and recent deploy markers.
 
 ```yaml
 groups:
   - name: node-rpc
     rules:
-      - record: fp:rpc_error_ratio:5m
-        expr: sum(rate(rpc_requests_total{status=~"5.."}[5m])) by (chain, instance) / sum(rate(rpc_requests_total[5m])) by (chain, instance)
       - alert: RpcErrorRateHigh
-        expr: fp:rpc_error_ratio:5m > 0.05
+        expr: |
+          sum(rate(rpc_requests_total{status=~"5.."}[5m])) by (chain, network, node)
+            / sum(rate(rpc_requests_total[5m])) by (chain, network, node) > 0.05
         for: 10m
         labels:
-          severity: page
+          severity: critical
         annotations:
-          summary: RPC error rate is above 5% for {{ $labels.chain }} {{ $labels.instance }}
+          summary: RPC error rate is above 5% for {{ $labels.chain }} {{ $labels.network }} on {{ $labels.node }}
+          description: More than 5% of RPC requests returned a 5xx status for 10 minutes.
+          runbook_url: https://docs.validated.4pillars.io/operations/common-runbooks
+          dashboard_url: https://grafana.example.com/d/rpc-overview
 ```
 
 ## Alert quality rules
@@ -60,9 +63,9 @@ groups:
 | Rule | Requirement |
 | --- | --- |
 | Page only on user or chain risk | A page must require immediate human action. Everything else is ticket or dashboard. |
-| Include the runbook link | Alerts should link to `/operations/common-runbooks` or a chain-specific operations page. |
+| Include the runbook and dashboard links | Every alert carries a link to its runbook and its dashboard. |
 | Use sustained windows | Avoid paging on one scrape failure unless it represents endpoint outage. |
-| Test silence and routing | Maintenance windows must silence expected alerts without hiding unrelated failures. |
+| Scope maintenance narrowly | Turn off alerts for the one target under maintenance, not for the node or the chain. See [Alert Control Runbook](/operations/alert-control-runbook). |
 
 ## Minimum smoke tests
 

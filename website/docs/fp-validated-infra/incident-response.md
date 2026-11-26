@@ -1,88 +1,70 @@
 ---
 title: Incident Response Runbook Model
 sidebar_position: 5
-last_verified: 2026-05-29
+last_verified: 2026-11-26
 ---
 
 # Incident Response Runbook Model
 
-This is the public version of the FP Validated incident loop. It describes the operating model without exposing private endpoints or command-level recovery details.
+This page describes how an alert becomes an incident and what an operator does at each step. Response time targets and the slashing policy are in [Responsiveness and Slashing Policy](/fp-validated-infra/responsiveness-and-slashing-policy). Roles and communication during an incident are in [Operations: Incident Response](/operations/incident-response).
 
 ```mermaid
-flowchart TD
-  signal[Signal Detected]
-  alert[Alertmanager or Grafana]
-  guard[FP Validated Guard]
-  dedup[Deduplicate and Classify]
-  notify[Notify Operator]
-  runbook[Run Runbook]
-  verify[Verify Recovery]
-  record[Record Evidence]
+flowchart LR
+  alert[Alert fires]
+  notify[Page and alert card]
+  ack[Acknowledge]
+  runbook[Runbook]
+  fix[Mitigate]
+  verify[Verify]
+  record[Record]
 
-  signal --> alert
-  alert --> guard
-  guard --> dedup
-  dedup --> notify
-  notify --> runbook
-  runbook --> verify
+  alert --> notify
+  notify --> ack
+  ack --> runbook
+  runbook --> fix
+  fix --> verify
   verify --> record
-  record --> dedup
 ```
 
-## Incident loop
+## From alert to operator
 
-```text
-Signal detected
-  → Alertmanager / Grafana webhook
-  → FP Validated Guard ingestion
-  → deduplication and state update
-  → incident/report pipeline
-  → operator notification
-  → runbook execution
-  → evidence and postmortem notes
-```
+1. An alert fires. Critical alerts page the on-call operator, and every alert appears as a card in chat.
+2. An operator acknowledges it. Alerts that stay active are reminded.
+3. The alert links to its runbook and its dashboard.
+
+The paging path and the chat path are independent, so the loss of one does not hide an incident.
 
 ## Triage phases
 
-| Phase | Goal | Examples | External control surface |
-| --- | --- | --- | --- |
-| Detect | Confirm the signal is real | exporter down, chain stall, peer loss, API degradation | dashboard, alert, Guard event |
-| Classify | Determine blast radius | one node, one chain, one cluster, management plane, external dependency | labels, chain matrix, deployment history |
-| Stabilize | Reduce risk | stop unsafe signing, isolate bad endpoint, pause rollout, preserve evidence | ArgoCD, Kubernetes API, Guard action |
-| Recover | Restore service safely | restart non-signing service, resync workload, fail back to known-good deployment, restore from approved backup | runbook-controlled Kubernetes/GitOps operation |
-| Verify | Prove recovery | dashboard green, alert resolved, chain height progressing, peers healthy, no double-sign risk | Prometheus, Grafana, chain RPC, Guard report |
-| Record | Preserve learning | incident report, timeline, action items, rule/runbook updates | evidence store and docs update |
-
-## Validator-specific guardrails
-
-- Signing safety beats uptime.
-- Ambiguous active validator state means stop and investigate.
-- Do not auto-failover signing roles without an explicit runbook.
-- Secret or signer mismatch is a critical incident.
-- Recovery evidence must include both Kubernetes state and chain-level behavior.
-
-## Serverless-for-operators principle
-
-Operators should not need routine SSH access to production nodes. Normal incident handling should happen through separated, auditable surfaces:
-
-| Need | Preferred surface |
+| Phase | Goal |
 | --- | --- |
-| Check health | Grafana, Prometheus, Guard health endpoint. |
-| Inspect deployment state | ArgoCD and Kubernetes API with scoped RBAC. |
-| Roll back a web/service workload | ArgoCD image or manifest rollback. |
-| Restart a non-signing workload | Guard/Kubernetes action with audit trail. |
-| Investigate chain status | Chain-specific dashboard and RPC/API checks. |
-| Handle signer ambiguity | Stop and escalate through validator runbook; avoid automated recovery. |
+| Detect | Confirm the signal is real and not a monitoring gap. |
+| Classify | Find the blast radius: one workload, one host, one chain, or the control services. |
+| Stabilize | Reduce risk before restoring service. For a signing workload this can mean stopping it. |
+| Recover | Restore service through the normal change path where time allows. |
+| Verify | Show recovery from more than one angle: the alert resolved, the chain advancing, and signing seen from an external source. |
+| Record | Leave a timeline and follow-ups. |
 
-Direct server access is a break-glass path, not the default operating model.
+## Rules for signing workloads
 
-## Public alert categories
+- Signing safety comes before uptime. A validator that is down loses rewards. A validator that double-signs is slashed.
+- If it is unclear which instance holds the active key, stop signing and investigate. Do not start a second instance to restore liveness.
+- There is no automatic failover for signing roles. Starting a signer on another host is a reviewed change that begins with proof that the old instance has exited.
+- A missing or mismatched signer secret is an incident, not a warning.
 
-| Category | Typical response |
+## Alert categories
+
+| Category | First checks |
 | --- | --- |
-| Availability | Check pod/node/exporter/service health. |
-| Chain liveness | Verify height, peers, consensus status, and upstream RPC. |
-| Signing safety | Freeze automation and validate signer topology. |
-| Performance | Inspect resource pressure, disk, network, and backlog. |
-| Observability quality | Repair missing labels, scrape targets, or pipeline drop events. |
-| Security/access | Rotate affected credentials and review access logs through private systems. |
+| Chain liveness | Height against a public reference, peer count, client logs. |
+| Signing | Missed blocks or attestations, the signer process, slashing protection, clock skew. |
+| Host | Disk, memory, and whether the host is reachable. |
+| Target missing | Whether the workload is gone, moved, or only its metrics are missing. |
+| Secrets | Whether the workload's secret source is ready. |
+| Monitoring | Whether metrics are still being collected and delivered. |
+
+## Related
+
+- [Monitoring Architecture](/fp-validated-infra/monitoring-architecture)
+- [FP Validated Guard](/fp-validated-infra/fp-validated-guard)
+- [Alert Control Runbook](/operations/alert-control-runbook)

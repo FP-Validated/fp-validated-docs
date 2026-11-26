@@ -1,81 +1,62 @@
 ---
 title: Monitoring Architecture
 sidebar_position: 4
-last_verified: 2026-05-29
+last_verified: 2026-11-26
 ---
 
 # Monitoring Architecture
 
-FP Validated monitoring is built around a repeatable node-agent pattern and a chain-aware alert taxonomy. The goal is to see infrastructure, Kubernetes, and chain health from outside the server, through controlled observability systems.
+Metrics are collected next to the workloads and evaluated in one place. Alert rules, alert routing, and dashboards live with the control services, so there is a single answer to "what is firing" and a single set of rules to review.
 
 ```mermaid
 flowchart LR
-  node[Validator or Service Node]
-  exporters[Node Exporter and Chain Exporter]
-  logs[Log Guard]
-  prom[Prometheus]
-  grafana[Grafana Dashboards]
-  am[Alertmanager]
+  targets[Chain workloads and hosts]
+  collect[Collection]
+  central[Central evaluation]
+  pager[On-call paging]
   guard[FP Validated Guard]
-  ops[Operator Workflow]
+  chat[Alert cards in chat]
+  dash[Dashboards]
 
-  node --> exporters
-  node --> logs
-  exporters --> prom
-  logs --> prom
-  prom --> grafana
-  prom --> am
-  am --> guard
-  guard --> ops
-  grafana --> ops
+  targets --> collect
+  collect --> central
+  central -- critical --> pager
+  central --> guard
+  guard --> chat
+  central --> dash
 ```
 
-## Node observability unit
+## Principles
 
-Each monitored node can receive a standard observability bundle:
+| Principle | What it means in practice |
+| --- | --- |
+| Use the chain's own metrics. | We read the metrics each chain client already exposes, under their original names, so a rule can be checked against the client's documentation. |
+| Look from the outside as well. | Internal metrics are compared with external views: public reference heights, reachability of our public ports from more than one location, and validator duty status seen from public sources. |
+| Alerting is opt-in and decided in Git. | A target alerts only when it has been switched on in its own configuration. A target that is being built or retired is still visible on dashboards but cannot page anyone. |
+| An alert must be actionable. | A page means someone has to act now. Everything else is a notification or a dashboard. |
+| No alert without a runbook. | A new alert is accepted only with a severity, a description, a runbook link, and a dashboard link. Rules are tested automatically before they merge. |
+| The monitoring system is monitored. | Loss of collection or of alert delivery raises its own alert. |
+| Dashboards are code. | Dashboards are stored in Git and reviewed like any other change. |
 
-| Component | Purpose | Public-safe signal examples |
-| --- | --- | --- |
-| node-exporter | Host and node resource metrics. | CPU, memory, disk pressure, network saturation. |
-| chain-exporter | Chain/runtime-specific metrics normalized for validator dashboards. | height progression, peers, consensus state, chain family labels. |
-| log-guard | Log-based guardrail signals and pipeline health. | dropped records, error bursts, process-level health signals. |
+## What we watch
 
-The monitoring repo uses per-node values and an ArgoCD ApplicationSet so onboarding a node is a declarative change, not manual dashboard wiring.
+| Area | Examples |
+| --- | --- |
+| Chain liveness | Height advancing, lag against a public reference, peer count. |
+| Signing | Missed blocks or attestations, slashing-protection health, clock skew on signing nodes. |
+| External view | A validator we operate is not performing its duties according to a public source. A public port is unreachable. |
+| RPC | Head stalled, or our height behind a public reference. |
+| Hosts | Disk, memory, and a node disappearing. |
+| Secrets delivery | A workload's secret source is not ready. |
 
-## Alert rule organization
+## Notification
 
-Alert rules are organized by scope:
+- Critical alerts page the on-call operator directly. This path does not depend on Guard.
+- [FP Validated Guard](/fp-validated-infra/fp-validated-guard) posts a card in chat for each active alert with the target, the start time, the observed value, and the threshold. Operators acknowledge on the card, and Guard sends reminders for alerts that stay active.
+- A silence is the exception. It needs a reason and an end time, and it is recorded under the name of the person who asked for it. Planned maintenance is handled by switching the target's alerts off in Git.
 
-| Scope | Examples | Action style |
-| --- | --- | --- |
-| Common/platform | exporter down, targets missing, labels missing, dropped records. | Restore observability or node health first. |
-| Chain-specific | block stall, peer degradation, consensus stress, mempool backlog, storage-node health. | Follow the chain family runbook. |
-| Security/guardrail | unexpected access path, secret delivery issue, signer mismatch indicator. | Freeze risky automation and escalate. |
-| Bundle | deployable PrometheusRule packages combining common and chain rules. | Version and promote through GitOps. |
+## Related
 
-Alert labels carry dimensions such as severity, service, category, family, chain, and network. This enables routing and public status summaries without exposing internals.
-
-## Dashboard strategy
-
-Dashboards are layered:
-
-1. FP Validated overview.
-2. Validator overview.
-3. Chain detail dashboards.
-4. Kubernetes cluster health dashboards.
-5. Node resource dashboards.
-
-Datasources are templated so dashboards can move between environments. Managed dashboards are kept in Git; manual edits are governed so GitOps does not unexpectedly overwrite operator changes.
-
-## What operators can do without server access
-
-Operators should be able to answer these questions from the external observability layer:
-
-- Is the node reachable and exporting metrics?
-- Is Kubernetes scheduling and restarting workloads normally?
-- Is the chain progressing in height?
-- Are peers or consensus health degraded?
-- Did a recent deployment correlate with new alerts?
-- Is an incident already deduplicated and tracked by Guard?
-
-If the answer requires direct server shell access, the runbook should either add an observability signal or document a controlled break-glass path.
+- [Alert Control Runbook](/operations/alert-control-runbook)
+- [Monitoring Standards](/operations/monitoring-standards)
+- [Incident Response Runbook Model](/fp-validated-infra/incident-response)

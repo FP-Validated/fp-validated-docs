@@ -1,110 +1,59 @@
 ---
 title: GitOps Topology
 sidebar_position: 2
-last_verified: 2026-07-03
+last_verified: 2026-11-26
 ---
 
 # GitOps Topology
 
-FP Validated uses GitOps as the control surface for both the management platform and validator platforms, but the roots are intentionally separate. This is what lets us operate externally through reviewed control APIs and ArgoCD workflows instead of logging into production servers for routine changes.
+The clusters are deployed from Git by one deployment service. The state of a cluster is changed by merging a pull request and then applying that commit to the workload it belongs to.
 
 ```mermaid
 flowchart LR
-  pr[Reviewed Change]
-  ci[Build and Validate]
-  registry[Container Registry]
-  argo[ArgoCD]
-  mgmt[Management Kubernetes Platform]
-  validator[Validator Kubernetes Platforms]
-  evidence[Health Checks and Evidence]
+  pr[Pull request]
+  ci[Automated checks]
+  review[Approval]
+  main[Main branch]
+  sync[Operator reads the diff and syncs]
+  cluster[Cluster]
 
   pr --> ci
-  ci --> registry
-  ci --> argo
-  argo --> mgmt
-  argo --> validator
-  mgmt --> evidence
-  validator --> evidence
-  evidence --> pr
+  ci --> review
+  review --> main
+  main --> sync
+  sync --> cluster
 ```
 
-## Repository and cluster boundaries
+## Principles
 
-| Plane | GitOps root | Purpose |
-| --- | --- | --- |
-| Management plane | k3s ArgoCD app-of-apps | Platform projects, access, observability, security, and management services. |
-| Service plane | k3s service app-of-apps | Foundational services such as ingress-nginx, cert-manager, Vault, External Secrets, identity/auth services, and observability. |
-| Chain plane | Chain workload explicit Applications | Validator, signer, storage, and chain-specific workloads. |
-| Monitoring plane | Monitoring ApplicationSet / explicit monitoring apps | Per-node observability agents, alert rules, dashboards, and routing assets. |
-| Product plane | Product-specific Kubernetes manifests | Public or internal web/API apps such as FP Router, claim dashboards, docs-style sites, and related platform surfaces. |
+- **Git is the source of truth.** What runs in a cluster is what a commit on the main branch says should run. A manual change made during an incident is written back to Git afterwards.
+- **Review before merge.** Every change is a pull request with automated checks and an approval.
+- **Merge is not rollout.** Sync is manual. Merging a version bump does not restart a validator. An operator chooses the time, reads the difference between Git and the cluster, and syncs one workload.
+- **Nothing is removed automatically.** A resource deleted from Git stays in the cluster until someone removes it on purpose. This protects chain data and signing workloads from a mistaken deletion in a pull request.
+- **Where a workload runs and how it is configured are kept apart.** The definition of which workloads exist on which cluster is in one repository. Charts and chain settings are in another. A settings change cannot add a new workload by itself.
+- **Secrets come first.** For each chain, the resources that deliver its secrets are applied and checked before any of its workloads.
 
-This separation allows controlled integration without pointing a management cluster at the entire downstream app tree.
+## Change flow
 
-## Application waves and domains
+| Step | What happens |
+| --- | --- |
+| Propose | A pull request. Operators and agents can open one through [FP Validated Guard](/fp-validated-infra/fp-validated-guard) under their own identity. |
+| Check | Automated checks validate the manifests, render the charts, test the alert rules, and reject known-unsafe patterns. |
+| Approve | A reviewer approves. The approval is recorded on the pull request. |
+| Merge | The change lands on the main branch. Nothing in the cluster changes yet. |
+| Sync | An operator reads the diff and syncs the one workload. |
+| Verify | The operator confirms the rollout, the health of the workload, and the chain's own signals such as height, peers, and signing. |
 
-The management plane groups ArgoCD AppProjects by domain:
+## Validators that move
 
-- platform
-- access
-- observability
-- security
+A validator that is being moved between hosts is marked so that it can only be started by hand, and the change states its precondition: the old instance has stopped. The same identity must never sign from two places.
 
-The Kubernetes service tree independently sequences foundational services:
+## Rollback
 
-1. namespaces
-2. certificate management
-3. ingress
-4. security services
-5. observability services
-6. platform/application services
+A rollback is the same flow with a revert commit. For an urgent case, the deployment service can return a workload to an earlier revision, and the revert is committed afterwards.
 
-The chain repo then deploys validator workloads as explicit Applications, each with common values and role-specific overlays.
+## Related
 
-## Externalized operations model
-
-Our operational goal is not “SSH into a server and patch it.” Routine changes follow an externalized control path:
-
-| Step | What happens | Why it matters |
-| --- | --- | --- |
-| Build | Code is validated and packaged as a container image. | Runtime artifacts are reproducible and reviewable. |
-| Publish | Image is pushed to a registry under a versioned tag or digest. | The deployment target is explicit. |
-| Declare | ArgoCD/Kustomize/Helm state references the intended image or values. | Desired state is visible outside the server. |
-| Sync | Kubernetes reconciles the declared state. | Operators do not need direct shell access to mutate production. |
-| Verify | Rollout health, service health, and logs are checked. | Deployment completion is evidence-based. |
-
-The `fp-claim-dashboard` deployment is a good example of this model: image build, registry push, ArgoCD image override, rollout verification, and application health check are performed through Kubernetes/GitOps surfaces rather than manual edits on the node.
-
-## Permission separation
-
-Public-facing operational tools should be role-scoped:
-
-- Developers can propose code and image changes.
-- Platform operators can approve deployment state changes.
-- Observability systems can read health and alert data.
-- Guard services can execute narrowly scoped operational actions.
-- Secret material is injected by runtime controllers, not copied into runbooks or dashboards.
-
-This gives external teams enough control to deploy and diagnose without granting broad server access.
-
-## Promotion model
-
-A public-safe promotion model looks like this:
-
-```mermaid
-sequenceDiagram
-  participant Dev as Developer
-  participant CI as Build Pipeline
-  participant Reg as Registry
-  participant Argo as ArgoCD
-  participant Kube as Kubernetes
-  participant Obs as Monitoring
-
-  Dev->>CI: propose and validate change
-  CI->>Reg: publish versioned image
-  Dev->>Argo: update desired deployment state
-  Argo->>Kube: reconcile manifests
-  Kube->>Obs: emit rollout and runtime signals
-  Obs-->>Dev: health, alerts, and evidence
-```
-
-Automated pruning and implicit takeover are avoided for sensitive workloads. Validator/signing changes require manual gates.
+- [FP Validated Guard](/fp-validated-infra/fp-validated-guard)
+- [Access and Secrets Model](/fp-validated-infra/access-and-secrets)
+- [ArgoCD and Values Pattern](/chains/shared-kubernetes/argocd-and-values-pattern)

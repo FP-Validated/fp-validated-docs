@@ -1,160 +1,68 @@
 ---
 title: FP Validated Guard
 sidebar_position: 4
-last_verified: 2026-05-29
+last_verified: 2026-11-26
 ---
 
 # FP Validated Guard
 
-FP Validated Guard is the operations control layer for FP Validated's Kubernetes and validator infrastructure. It is designed so routine operations happen through authenticated APIs, GitOps, dashboards, and audited control surfaces — not by logging directly into production servers.
-
-```mermaid
-flowchart TB
-  op[Operator]
-  ui[Guard UI and API]
-  auth[Auth, OPA, Rate Limit, Audit]
-  kube[Kubernetes Resource API]
-  validators[Validator Registry and Adapters]
-  alerts[Alert Webhook and Inbox]
-  reports[Incident Reports and Evidence]
-  gitops[GitOps and ArgoCD Actions]
-  clusters[Kubernetes Platforms]
-  chains[Chain and Validator Systems]
-  monitoring[Grafana, Prometheus, Alertmanager]
-
-  op --> ui
-  ui --> auth
-  auth --> kube
-  auth --> validators
-  auth --> alerts
-  auth --> gitops
-  kube --> clusters
-  gitops --> clusters
-  validators --> chains
-  monitoring --> alerts
-  alerts --> reports
-  reports --> op
-```
-
-## What it is
-
-From the source code, Guard is a Go API server with a web frontend and Kubernetes integration. The server initializes:
-
-| Capability | Source-code basis | Public description |
-| --- | --- | --- |
-| HTTP API server | `internal/apiserver/server.go` | Echo-based API server with health, readiness, metrics, authentication, rate limiting, and route registration. |
-| Kubernetes operations | `internal/kube/container.go`, `internal/kube/handlers/*` | Multi-cluster Kubernetes client container with typed handlers for Pods, Deployments, Nodes, Services, Ingresses, Events, ConfigMaps, Secrets, and apply/dry-run. |
-| Validator registry | `internal/apiserver/handlers_chain_validators.go` | Stores chain/network/operator metadata and normalizes validator records across chain families. |
-| Validator info adapters | `internal/apiserver/handlers_chain_validator_info*.go` | Enriches validator status through chain-specific adapters and exposes a common response model. |
-| Alert intake | `internal/apiserver/handlers_alert_webhook.go` | Accepts authenticated Grafana/Alertmanager-style webhook events, deduplicates alerts, updates incident state, and triggers reports/notifications. |
-| GitOps actions | `internal/apiserver/handlers_gitops.go`, `internal/apiserver/handlers_argocd.go` | Connects operational changes to GitOps and ArgoCD workflows instead of direct node mutation. |
-| Deployment model | `deploy/helm/fp-validated-guard/templates/*` | Runs as a Kubernetes Deployment with service account RBAC, probes, secret references, and optional integrations. |
-
-## Why it exists
-
-Validator operations require both blockchain awareness and Kubernetes awareness:
-
-- blockchain side: validator identity, chain/network, operator address, uptime, commission, status, alerts, and incident reports;
-- Kubernetes side: workload health, rollouts, pod logs, events, services, ingresses, configuration, and safe apply/dry-run;
-- operations side: approval, evidence, alert routing, GitOps state, and auditability.
-
-Guard joins those surfaces into one operator layer. The intended outcome is narrower operational access: users interact with Guard, ArgoCD, monitoring, and Kubernetes APIs under scoped permissions rather than receiving broad shell access to servers.
-
-## Source-derived feature map
-
-| Area | What Guard exposes |
-| --- | --- |
-| Health and readiness | `/healthz`, `/readyz`, `/metrics`, `/api/v1/info`. |
-| Core operations | missions, runs, changes, approvals, evidence, logs, policies, bootstrap jobs, reports, governance, audit trail, deployments, timeline, playbooks. |
-| Kubernetes browser | resource registry, generic resource browser, namespaces, Pods, Deployments, StatefulSets, DaemonSets, Services, Ingresses, ConfigMaps, Secrets, Events. |
-| Kubernetes actions | pod log streaming, batch delete for supported resources, deployment scale/restart, server-side apply and dry-run. |
-| Platform integrations | ArgoCD applications, GitOps commit/apply/file access, Helm release summary, deprecation check, cluster config, observability status. |
-| Chain operations | chains, chain sources, chain reports, chain validators, validator detail enrichment, upgrade channels, timeseries. |
-| Alert and incident loop | alert inbox, alert history, webhook ingestion, incident reports, report generation/review, notification channels. |
-| Assurance views | runtime status, command center, security posture, compliance workbench, change queue, evidence library. |
-
-## Kubernetes operations model
-
-Guard's Kubernetes integration is source-code based, not a screen-scraper:
+FP Validated Guard is our operations console. People use it through a web console, and AI agents use it through an API. Both paths run through the same checks, so a click in the console and a call from an agent are authorized, limited, and logged the same way.
 
 ```mermaid
 flowchart LR
-  req[API Request]
-  auth[Auth and Rate Limit]
-  select[Cluster Selection]
-  clients[Lazy Kubernetes Clients]
-  handler[Typed Resource Handler]
-  k8s[Kubernetes API]
-  resp[Sanitized Response]
+  person[Operator]
+  agent[AI agent]
+  guard[FP Validated Guard]
+  checks[Permission level, approval, audit]
+  platform[Clusters, deployments, monitoring, pull requests]
 
-  req --> auth
-  auth --> select
-  select --> clients
-  clients --> handler
-  handler --> k8s
-  k8s --> resp
+  person -- single sign-on --> guard
+  agent -- API key --> guard
+  guard --> checks
+  checks --> platform
 ```
 
-The server discovers an in-cluster configuration when running inside Kubernetes and can also load configured cluster contexts. Requests select a target cluster through query parameters and route to typed handlers.
+Guard is reachable only from the internal network. It is not exposed to the internet.
 
-Publicly important guardrails:
+## Why it exists
 
-- secret data should be masked by default in user-facing views;
-- apply supports dry-run and a denylist for dangerous resource kinds;
-- exec is disabled by default and should remain a break-glass feature;
-- mutating operations should be tied to RBAC, policy, and audit trails;
-- validator/signing changes should remain manual-gated even if Kubernetes actions are available.
+Operating validators means a small number of people, and now agents, touching systems where one wrong command can cost a delegator money. Guard puts one controlled path in front of those systems. Direct access remains for emergencies, and routine work does not use it.
 
-## Alert and incident loop
+## What it does
 
-The webhook source code shows Guard acting as the bridge between monitoring and response:
-
-```mermaid
-sequenceDiagram
-  participant Mon as Monitoring
-  participant Guard as FP Validated Guard
-  participant Store as Alert and Incident Store
-  participant Report as Report Pipeline
-  participant Ops as Operator
-
-  Mon->>Guard: authenticated alert webhook
-  Guard->>Store: upsert or resolve alert
-  Guard->>Store: deduplicate by source identity
-  Guard->>Report: generate or enqueue incident report
-  Guard-->>Ops: notification and evidence
-```
-
-This loop supports public-facing incident discipline: every alert is accepted through an authenticated endpoint, normalized, deduplicated, optionally linked to an incident/report, and then made available to operators through a controlled surface.
-
-## Validator registry and chain adapters
-
-The chain validator source files show a registry model with fields such as chain name, network, operator address, explorer URL, LCD/RPC endpoint metadata, chain kind, denom, and decimals. Guard then enriches validator info through chain-specific adapters and returns a common model:
-
-| Common model area | Meaning |
+| Area | What an operator or agent can do |
 | --- | --- |
-| Description | moniker, identity, website, security contact, details. |
-| Validation | status, jailed flag, voting power, delegator shares, unbonding fields. |
-| Commission | rate, max rate, max change rate, update time. |
-| Uptime | windowed signing/uptime information where available. |
-| Warnings | adapter-specific caveats when data is partial. |
+| Workloads | Inspect workloads, read logs and events, restart or roll back. |
+| Deployments | See the difference between Git and the cluster, and sync a workload. |
+| Monitoring | Query metrics, see active alerts, and manage silences. |
+| Alerts | Guard posts a card for each active alert, tracks who acknowledged it, and sends reminders. |
+| Changes | Open a pull request in an infrastructure repository under the caller's own identity. Guard cannot merge. |
+| Approvals | Review and approve pending changes from one inbox. |
+| Chain operations | Track governance proposals on the chains we validate, cast votes, and see upcoming chain upgrades. |
 
-This lets the public docs describe validator operations consistently across Cosmos-style chains, Sui, Walrus, Monad, Ethereum, Canton, and future chain adapters without exposing private endpoints.
+## Principles
 
-## Security posture
-
-Guard should be presented publicly as an internal control plane, not an internet-open admin panel.
-
-| Control | Public explanation |
+| Principle | What it means in practice |
 | --- | --- |
-| Authentication | API requests are authenticated; webhook ingestion requires a shared secret or bearer-style secret. |
-| Authorization | Kubernetes and operational actions are intended to be policy/RBAC controlled. |
-| Rate limiting | API server has request rate limiting middleware. |
-| Auditability | Operational flows include audit/evidence concepts and report generation. |
-| Secret handling | Runtime secrets are referenced through Kubernetes/Vault-style secret delivery, not embedded in docs. |
-| Least privilege direction | Users receive role-scoped Guard/ArgoCD/observability access instead of direct server login. |
+| The same rules for people and agents. | There is no separate, looser path for automation. |
+| Levels, starting at read-only. | Every caller has a level: read, operate, or administer. Each key or person gets the lowest level that does the job. |
+| Dangerous actions are held. | Deleting, syncing a deployment, touching a protected area, or revealing a secret does not run on the first call. Depending on the caller, it needs a second confirmation or an approval from a human administrator. A held call changes nothing. |
+| Protected areas. | System and security namespaces are off limits below the administrator level, and guarded even there. |
+| Secrets are masked. | Secret values are hidden in every response. Revealing one is an administrator action that is held and logged. |
+| Everything is recorded. | Every call is logged with who made it, what it was, and when. |
+| One switch stops all changes. | A kill switch rejects every change from every person and key. Reading keeps working. |
+| Sensitive rights are personal. | Voting on governance proposals and approving pull requests are granted to named people. An administrator role does not include them. |
+| Git stays the source of truth. | Resources managed from Git are changed by pull request, not edited in the cluster. |
 
-## Public positioning
+## Agents
 
-Use this phrasing for external audiences:
+- One key per agent, named so the audit log shows which agent acted.
+- The lowest level that does the job. Investigation is read-only.
+- Every key expires. A key that appears in a chat, a log, or a commit is revoked.
+- An agent whose call is held is told that nothing was executed. It waits for the confirmation or approval. It does not retry with different arguments or look for another way to make the same change.
 
-> FP Validated Guard is our operations gateway for validator infrastructure. It gives operators a controlled, auditable way to inspect Kubernetes state, follow chain-specific validator health, receive alerts, generate incident evidence, and trigger approved remediation workflows — while keeping server access and secret material separated from day-to-day operations.
+## Related
+
+- [GitOps Topology](/fp-validated-infra/gitops-topology)
+- [Access and Secrets Model](/fp-validated-infra/access-and-secrets)
+- [Incident Response Runbook Model](/fp-validated-infra/incident-response)
