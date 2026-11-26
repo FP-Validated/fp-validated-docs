@@ -20,8 +20,8 @@ Chain documentation is organized by the chain first, then by network or deployme
 | [Sei](/chains/sei/deployment-architecture) | Validator deployment architecture with a local signer. |
 | [Stable](/chains/stable/deployment-architecture) | Validator deployment architecture with a threshold signer. |
 | [Initia](/chains/initia/deployment-architecture) | Validator deployment architecture with a local signer and oracle sidecar. |
-| [Walrus](/chains/walrus/storage-node-guide) | Storage node deployment guide. |
-| [Canton](/chains/canton/validator-splice-ops) | Splice validator operations guide. |
+| [Walrus](/chains/walrus/overview) | Storage node overview. |
+| [Canton](/chains/canton/overview) | Validator overview. |
 | [Sui](/chains/sui/overview) | Full node and developer interface guide. |
 | [Aptos](/chains/aptos/overview) | Fullnode, REST, indexer, and transaction-stream guide. |
 | [Solana](/chains/solana/overview) | RPC node, WebSocket PubSub, and operations guide. |

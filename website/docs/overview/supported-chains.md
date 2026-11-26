@@ -11,7 +11,7 @@ Chain documentation comes in three depths.
 | Depth | Chains | What you get |
 | --- | --- | --- |
 | Full developer and operations guide | [Ethereum](/chains/ethereum/overview), [Sui](/chains/sui/overview), [Aptos](/chains/aptos/overview), [Solana](/chains/solana/overview) | Node architecture, deployment, developer interfaces with an RPC matrix, samples, operations, and reference. Status is `draft` until verified. |
-| Kubernetes deployment pattern | [Sei](/chains/sei/deployment-architecture), [Stable](/chains/stable/deployment-architecture), [Initia](/chains/initia/deployment-architecture), [Walrus](/chains/walrus/storage-node-guide), [Canton](/chains/canton/validator-splice-ops) | How the validator or storage node is declared: roles, values files, signer mode, ports. |
+| Kubernetes deployment pattern | [Sei](/chains/sei/deployment-architecture), [Stable](/chains/stable/deployment-architecture), [Initia](/chains/initia/deployment-architecture), [Walrus](/chains/walrus/overview), [Canton](/chains/canton/overview) | How the validator or storage node is declared: roles, values files, signer mode, ports. |
 | Listed support | See [Chains Overview](/chains#additional-supported-networks) | Support class only, with a link to the staking guide where one exists. |
 
 The full list with node types and interfaces is in the [Chain Matrix](/reference/chain-matrix). Delegators looking for how to stake should start at [Staking](/staking).
