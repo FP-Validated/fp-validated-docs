@@ -97,7 +97,7 @@ Resources managed by ArgoCD are changed in Git, not in the cluster. Guard's pull
 
 - The guard, the masking, and the audit log are enforced by the Guard process. Kubernetes RBAC limits what that process can impersonate, but a compromised Guard pod could act at the `admin` level.
 - An ArgoCD sync deploys what is in Git. Guard does not check the target namespace of an application against the protected list, so review of the Git change is the control for those namespaces.
-- Guard does not hold validator signing keys and has no path to decrypt them.
+- An `admin` call can read any Kubernetes Secret in a cluster Guard manages, including a signer's. The guard and the audit log apply to that call, and `admin` is limited to a few named people.
 
 ## Recovery
 

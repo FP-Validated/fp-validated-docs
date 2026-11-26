@@ -6,7 +6,7 @@ last_verified: 2026-11-26
 
 # Access and Secrets Model
 
-People reach management services through a VPN and single sign-on. Workloads get secrets from Vault through External Secrets. The two paths do not cross: an operator's login does not grant access to a workload's secrets, and a workload's Vault role does not grant access to management services.
+People reach management services through a VPN and single sign-on. Workloads get secrets from Vault through External Secrets. The two paths use different identities. An operator signs in as a person and is authorized by group. A workload reads Vault as its own namespace's service account, and that identity cannot sign in to any management service.
 
 ```mermaid
 flowchart LR

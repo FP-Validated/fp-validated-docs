@@ -44,7 +44,7 @@ This section describes how the platform is built. It leaves out IP addresses, pr
 | --- | --- | --- |
 | Kubernetes | Managed Kubernetes service with a private API endpoint. | k3s. |
 | Runs | ArgoCD, Vault, External Secrets, the identity provider (Authentik), the internal registry (Harbor), the policy engine (Kyverno), cert-manager, ingress, central Prometheus, Alertmanager, and Grafana. | Chain nodes, validators, signers, storage nodes, FP Validated Guard, and product services such as this docs site, the staking platform, and the RPC gateway. |
-| Does not run | Chain workloads or signing keys in use. | Its own ArgoCD, Vault, Alertmanager, or Grafana. |
+| Does not run | Chain nodes or validators. | Its own ArgoCD, Vault, Alertmanager, or Grafana. |
 | Nodes | One provider, one region. | Several providers and regions, joined into one cluster over an encrypted overlay network. |
 | Storage | Dynamic volumes from the provider. | Statically defined volumes with a retain policy. A chain's data stays on a named volume or a named host. |
 
