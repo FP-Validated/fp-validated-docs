@@ -1,71 +1,78 @@
 ---
-title: Bootstrap and Recovery Runbook
+title: Bootstrap and Recovery
 sidebar_position: 6
-last_verified: 2026-05-29
+last_verified: 2026-11-26
 ---
 
-# Bootstrap and Recovery Runbook
+# Bootstrap and Recovery
 
-This public runbook summarizes the gates FP Validated uses when building or recovering Kubernetes-based infrastructure.
+This page gives the order in which the platform is built and the order in which it is restored. The two are the same order, because each layer depends on the ones before it. Command-level procedures are kept private.
 
 ```mermaid
 flowchart TB
-  network[Network and Private Access]
-  cluster[Kubernetes Cluster]
-  gitops[GitOps Controller]
-  secrets[Vault and External Secrets]
-  access[Identity and RBAC]
-  obs[Observability]
-  workloads[Workloads]
-  evidence[Evidence]
+  network[Network and VPN]
+  mgmt[Management cluster]
+  argo[ArgoCD]
+  secrets[cert-manager, External Secrets, Vault]
+  access[Ingress and identity provider]
+  obs[Monitoring]
+  work[Workload cluster and its platform services]
+  chainsec[Chain secrets Applications]
+  chains[Chain workloads]
 
-  network --> cluster
-  cluster --> gitops
-  gitops --> secrets
+  network --> mgmt
+  mgmt --> argo
+  argo --> secrets
   secrets --> access
   access --> obs
-  obs --> workloads
-  workloads --> evidence
+  obs --> work
+  work --> chainsec
+  chainsec --> chains
 ```
 
-## Bootstrap phases
+## Bootstrap order
 
-1. **Network gate** — private management access and DNS/proxy assumptions are validated without publishing internal topology.
-2. **Cluster gate** — base cluster comes up with minimal dependencies.
-3. **GitOps gate** — ArgoCD is installed and points only at the intended app root.
-4. **Secrets gate** — Vault and External Secrets are initialized through manual approval steps.
-5. **Access gate** — identity-aware ingress and RBAC are validated before exposing management UIs.
-6. **Observability gate** — Prometheus/Grafana/Alertmanager and node agents are deployed before production workloads are considered healthy.
-7. **Workload gate** — chain and service workloads sync only after monitoring and secret delivery are proven.
-8. **Evidence gate** — screenshots/logs/manifests are collected for operational proof.
+| Step | What is built | Ready when |
+| --- | --- | --- |
+| 1. Network | Virtual network, VPN gateway, internal DNS. | An operator can reach the private network. |
+| 2. Management cluster | The managed Kubernetes cluster, from Terraform. | Nodes are ready and the API is reachable only privately. |
+| 3. ArgoCD | ArgoCD and its root Application. | The root lists the expected child Applications. |
+| 4. Secrets | cert-manager, External Secrets, Vault. Vault is initialized once and unseals through the cloud KMS after that. | The cluster secret store reports ready. |
+| 5. Access | Ingress controllers, the identity provider, internal certificates. | Sign-in with MFA works for ArgoCD and Vault. |
+| 6. Monitoring | Central Prometheus, Alertmanager, Grafana, rules, dashboards. | Rules are loaded and Alertmanager has its receivers. |
+| 7. Workload cluster | The k3s cluster, registered with ArgoCD as a remote cluster. Then its platform Applications: storage, ingress, External Secrets, cluster Prometheus, Guard. | The cluster's metrics appear in the central Prometheus. |
+| 8. Chain secrets | For each chain: namespace, secret store, ExternalSecrets. | Every ExternalSecret is synced. |
+| 9. Chain workloads | Nodes first, then signers. | The node is synced to the chain head before a signer starts. |
+
+A chain's secrets Application is synced and checked before any workload in its namespace. A validator is first deployed as a non-signing node and switched to its signing values in a separate change.
 
 ## Recovery principles
 
-- Keep management and validator planes independently recoverable.
-- Rebuild management services without taking over validator workloads automatically.
-- Restore secrets from approved secure processes only.
-- Prefer phase-by-phase recovery over broad cluster-wide changes.
-- Capture evidence before and after recovery.
-- Prefer GitOps/API recovery over direct server access.
-- Do not publish command transcripts that reveal private topology or credentials.
+- Fix the lowest broken layer first. A workload problem that is really a secrets problem is fixed at the secrets layer.
+- Restoring the management cluster does not touch chain workloads. They keep running without it, as described in the [overview](/fp-validated-infra/overview#what-happens-when-the-management-cluster-is-down).
+- Recover through Git and ArgoCD where possible. A manual change made during an incident is written back to Git afterwards, or it will show up as drift.
+- Chain data volumes use a retain policy. Deleting a workload or an Application does not delete its data.
+- Signing safety outranks availability during recovery, the same as in normal operation.
 
-## Recovery matrix
+## Recovery by failure area
 
-| Failure area | First response | Recovery boundary |
+| Failure | First response | Boundary |
 | --- | --- | --- |
-| Management UI unavailable | Verify private access, ingress, identity, and service health. | Do not mutate validator workloads while restoring UI access. |
-| GitOps controller degraded | Freeze non-emergency deployments and restore controller health. | Avoid manual drift except documented break-glass actions. |
-| Secret delivery issue | Stop affected rollout and validate External Secrets/Vault integration. | Never paste secrets into manifests or docs. |
-| Observability gap | Restore exporter/scrape/dashboard pipeline. | Do not declare workload healthy without independent evidence. |
-| Chain workload degraded | Follow chain-specific runbook. | Signing safety overrides availability. |
-| Product workload degraded | Roll back image or manifest through ArgoCD/Kubernetes API. | No routine SSH-based patching. |
+| A management UI is unreachable | Check VPN, internal DNS, ingress, and the identity provider, in that order. | Do not change workloads to get a UI back. |
+| ArgoCD is degraded | Pause deployments. Workloads are unaffected. Restore ArgoCD from its Applications in Git. | No manual applies to the workload cluster except documented break-glass steps. |
+| Vault is sealed or down | Running workloads keep their existing Kubernetes Secrets. Restore Vault. Auto-unseal handles a plain restart. | No rollouts that need new or rotated secrets until the secret stores report ready. |
+| A secret store is not ready | Check the namespace's service account, the Vault role, and Vault reachability. | Do not copy secret values by hand into the cluster. |
+| Central monitoring is down | Treat every workload as unobserved. Check chains from external sources until it is back. | Do not start risky changes while blind. |
+| A workload node is lost | Non-signing workloads are redeployed on another node. For a signing workload, confirm the old instance is gone before starting it elsewhere. | One active signer per key. |
+| Guard is unavailable | Critical paging still works. Use ArgoCD directly for urgent syncs. | Emergency key issuance and the kill switch are available from inside the Guard pod to an operator with host access. |
+| A chain workload is degraded | Follow the chain's runbook. | Signing safety first. |
 
-## What external readers should learn
+## Backups that recovery depends on
 
-FP Validated's recovery model is not "restart everything." It is dependency-aware:
-
-```text
-Access → GitOps → Secrets → Observability → Workloads → Evidence
-```
-
-That ordering keeps recovery auditable and reduces the chance that a management-plane issue becomes a validator safety incident.
+| Item | Where it lives |
+| --- | --- |
+| Cluster and application definitions | Git. |
+| Secrets | Vault storage, with unseal through the cloud KMS. Bootstrap values are in a password manager. |
+| Guard state | Daily database snapshots, with a restore check in the console. |
+| Chain data | Retained volumes. A lost node is rebuilt from the chain's snapshot or state-sync source, not from our own backup. |
+| Signer state | Handed over explicitly when a validator moves. |

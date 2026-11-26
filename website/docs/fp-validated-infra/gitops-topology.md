@@ -1,110 +1,126 @@
 ---
 title: GitOps Topology
 sidebar_position: 2
-last_verified: 2026-07-03
+last_verified: 2026-11-26
 ---
 
 # GitOps Topology
 
-FP Validated uses GitOps as the control surface for both the management platform and validator platforms, but the roots are intentionally separate. This is what lets us operate externally through reviewed control APIs and ArgoCD workflows instead of logging into production servers for routine changes.
+Both clusters are deployed by one ArgoCD, which runs in the management cluster. The workload cluster is registered with it as a remote cluster and has no ArgoCD of its own. Cluster state is changed by merging a pull request and syncing the application that the change belongs to.
 
 ```mermaid
 flowchart LR
-  pr[Reviewed Change]
-  ci[Build and Validate]
-  registry[Container Registry]
+  pr[Pull request]
+  ci[CI checks]
+  review[Approval]
+  main[Main branch]
   argo[ArgoCD]
-  mgmt[Management Kubernetes Platform]
-  validator[Validator Kubernetes Platforms]
-  evidence[Health Checks and Evidence]
+  mgmt[Management cluster]
+  work[Workload cluster]
 
   pr --> ci
-  ci --> registry
-  ci --> argo
-  argo --> mgmt
-  argo --> validator
-  mgmt --> evidence
-  validator --> evidence
-  evidence --> pr
+  ci --> review
+  review --> main
+  main --> argo
+  argo -- manual sync --> mgmt
+  argo -- manual sync --> work
 ```
 
-## Repository and cluster boundaries
+## Repositories
 
-| Plane | GitOps root | Purpose |
+| Repository | Holds |
+| --- | --- |
+| Cluster repository | Terraform for the management cluster, and the ArgoCD Applications for both clusters. Also the per-chain namespace, secret store, and ExternalSecret manifests. |
+| Chain repository | Helm charts for chain workloads and one values directory per chain and network. No ArgoCD Applications. |
+| Monitoring repository | Alert rules, dashboards, exporters, and the static node inventory. |
+| Product repositories | Charts or manifests for product services such as the staking platform and this docs site. |
+
+Keeping the Applications in the cluster repository and the charts in the chain repository means one place answers "what is deployed where", and a chain values change cannot add a new workload by itself.
+
+## Application roots
+
+ArgoCD has one root per cluster.
+
+| Root | Deploys |
+| --- | --- |
+| Management root | The management cluster's own services. |
+| Workload root | Every Application that targets the workload cluster: platform services first, then chains and product services. |
+
+Applications are ordered by sync wave, and the file name carries the wave number, so the directory listing reads in dependency order.
+
+Management cluster order:
+
+1. AppProjects and namespaces
+2. cert-manager
+3. External Secrets
+4. Vault
+5. Ingress controllers, internal and public
+6. Policy engine and policies
+7. Identity provider
+8. Internal certificates and OIDC client secrets
+9. Prometheus, Alertmanager, Grafana, and monitoring assets
+10. Internal CA distribution to nodes
+11. Image registry
+12. Internal ingress routes
+13. Product and operations services
+
+Workload cluster order:
+
+1. Storage driver, cluster DNS, static volumes
+2. Ingress controllers and cert-manager
+3. External Secrets
+4. Cluster Prometheus
+5. FP Validated Guard
+6. Chains and product services. For each chain and network, a secrets Application comes before its workload Applications.
+
+ArgoCD AppProjects separate platform, security, observability, and workload-cluster Applications, so an Application in one project cannot deploy into another project's namespaces or clusters.
+
+## How a chain is declared
+
+Each chain and network gets two kinds of Application.
+
+| Application | Source | Creates |
 | --- | --- | --- |
-| Management plane | k3s ArgoCD app-of-apps | Platform projects, access, observability, security, and management services. |
-| Service plane | k3s service app-of-apps | Foundational services such as ingress-nginx, cert-manager, Vault, External Secrets, identity/auth services, and observability. |
-| Chain plane | Chain workload explicit Applications | Validator, signer, storage, and chain-specific workloads. |
-| Monitoring plane | Monitoring ApplicationSet / explicit monitoring apps | Per-node observability agents, alert rules, dashboards, and routing assets. |
-| Product plane | Product-specific Kubernetes manifests | Public or internal web/API apps such as FP Router, claim dashboards, docs-style sites, and related platform surfaces. |
+| Secrets | Cluster repository | The namespace, the Vault secret store for that namespace, and the ExternalSecrets. |
+| Workload, one per node or role | Chain repository chart plus two values files | The StatefulSet or Deployment, its Services, and its ServiceMonitor. |
 
-This separation allows controlled integration without pointing a management cluster at the entire downstream app tree.
+A workload Application loads the chain's common values first and the node's own values second:
 
-## Application waves and domains
-
-The management plane groups ArgoCD AppProjects by domain:
-
-- platform
-- access
-- observability
-- security
-
-The Kubernetes service tree independently sequences foundational services:
-
-1. namespaces
-2. certificate management
-3. ingress
-4. security services
-5. observability services
-6. platform/application services
-
-The chain repo then deploys validator workloads as explicit Applications, each with common values and role-specific overlays.
-
-## Externalized operations model
-
-Our operational goal is not “SSH into a server and patch it.” Routine changes follow an externalized control path:
-
-| Step | What happens | Why it matters |
-| --- | --- | --- |
-| Build | Code is validated and packaged as a container image. | Runtime artifacts are reproducible and reviewable. |
-| Publish | Image is pushed to a registry under a versioned tag or digest. | The deployment target is explicit. |
-| Declare | ArgoCD/Kustomize/Helm state references the intended image or values. | Desired state is visible outside the server. |
-| Sync | Kubernetes reconciles the declared state. | Operators do not need direct shell access to mutate production. |
-| Verify | Rollout health, service health, and logs are checked. | Deployment completion is evidence-based. |
-
-The `fp-claim-dashboard` deployment is a good example of this model: image build, registry push, ArgoCD image override, rollout verification, and application health check are performed through Kubernetes/GitOps surfaces rather than manual edits on the node.
-
-## Permission separation
-
-Public-facing operational tools should be role-scoped:
-
-- Developers can propose code and image changes.
-- Platform operators can approve deployment state changes.
-- Observability systems can read health and alert data.
-- Guard services can execute narrowly scoped operational actions.
-- Secret material is injected by runtime controllers, not copied into runbooks or dashboards.
-
-This gives external teams enough control to deploy and diagnose without granting broad server access.
-
-## Promotion model
-
-A public-safe promotion model looks like this:
-
-```mermaid
-sequenceDiagram
-  participant Dev as Developer
-  participant CI as Build Pipeline
-  participant Reg as Registry
-  participant Argo as ArgoCD
-  participant Kube as Kubernetes
-  participant Obs as Monitoring
-
-  Dev->>CI: propose and validate change
-  CI->>Reg: publish versioned image
-  Dev->>Argo: update desired deployment state
-  Argo->>Kube: reconcile manifests
-  Kube->>Obs: emit rollout and runtime signals
-  Obs-->>Dev: health, alerts, and evidence
+```yaml
+source:
+  path: charts/<chart>
+  helm:
+    valueFiles:
+      - /variables/<chain>-<network>/common-values.yaml
+      - /variables/<chain>-<network>/<node>.yaml
 ```
 
-Automated pruning and implicit takeover are avoided for sensitive workloads. Validator/signing changes require manual gates.
+The secrets Application is synced before any workload in the namespace. A Cosmos validator with a threshold signer is several Applications: one per cosigner and one for the validator. Details are in [ArgoCD and Values Pattern](/chains/shared-kubernetes/argocd-and-values-pattern).
+
+## Sync policy
+
+- Applications for both clusters use manual sync. ArgoCD shows drift but does not correct it.
+- Pruning is off. A resource removed from Git stays in the cluster until someone deletes it on purpose.
+- Syncing a root does not sync its children. Each child Application is synced separately, and a sync can be limited to selected resources.
+- Applications for validators that are being moved carry a manual-only cutover annotation, and their file header states the precondition, for example that the old instance has exited.
+
+The exception is a small set of monitoring-only Applications, such as host exporters, which sync automatically.
+
+## Change flow
+
+| Step | What happens |
+| --- | --- |
+| Propose | A pull request against the cluster, chain, or monitoring repository. Operators and agents can open it through Guard under their own GitHub identity. |
+| Check | CI parses every YAML file, lints charts, runs chart render tests and rule tests, and rejects known-bad patterns such as a manifest that reads a Vault root token. |
+| Approve | CI posts an approval request to Slack and to the Guard inbox. An approval there is recorded as a GitHub review on the pull request. A reviewer can also approve in GitHub directly. |
+| Merge | The pull request merges to the main branch. Nothing changes in the cluster yet. |
+| Sync | An operator reads the ArgoCD diff and syncs the one Application. Through Guard, a real sync is a guarded call. |
+| Verify | Rollout status, pod health, and the chain's own signals: height, peers, signing. |
+
+A rollback is the same flow with a revert commit, or an ArgoCD rollback to an earlier revision for an urgent case.
+
+## Related
+
+- [FP Validated Guard](/fp-validated-infra/fp-validated-guard)
+- [Access and Secrets Model](/fp-validated-infra/access-and-secrets)
+- [ArgoCD and Values Pattern](/chains/shared-kubernetes/argocd-and-values-pattern)

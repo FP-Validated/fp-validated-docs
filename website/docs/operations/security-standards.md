@@ -1,7 +1,7 @@
 ---
 title: Security Standards
 sidebar_position: 4
-last_verified: 2026-05-28
+last_verified: 2026-11-26
 ---
 
 Security standards apply to every chain runtime and every developer interface. Chain-specific pages can tighten these controls, but they must not weaken the shared baseline.
@@ -62,14 +62,13 @@ Never commit secrets to documentation, examples, Helm values, Docker Compose fil
 
 ## Container image supply chain
 
-Externally provided images (for example, foundation-provided client images) must be admitted through the internal registry and its vulnerability scan gate, not deployed directly from a public or foundation registry.
+- Reference every image by an explicit version tag or a digest. Do not deploy a floating tag such as `latest`.
+- Use a digest for signer images.
+- Take client images from the client team's official registry, and check the version against the release notes.
+- Change an image version through a reviewed pull request, not in the cluster.
+- Where an internal registry with a vulnerability scanner is available to the cluster, mirror the image there and pull it with a pull-only credential.
 
-- Mirror the external image into the internal registry under an explicit tag or digest.
-- Require an automatic vulnerability scan on push.
-- Block pulls of images that reach or exceed the defined severity threshold, so a vulnerable image cannot be deployed.
-- Reference the internal image in deployment state and pull it with a scoped, pull-only credential.
-
-See [Container Image Supply Chain](/fp-validated-infra/image-supply-chain) for the full architecture and gate behaviour.
+See [Container Image Supply Chain](/fp-validated-infra/image-supply-chain) for which of these controls is in place on which cluster.
 
 ## RPC hardening
 

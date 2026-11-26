@@ -1,12 +1,16 @@
 ---
 title: Kubernetes Chart Source
 sidebar_position: 9
-last_verified: 2026-05-29
+last_verified: 2026-11-26
 ---
 
 # Kubernetes Chart Source
 
-This site is intended to provide source-code patterns that an institutional operator can adapt for Docker and Kubernetes-based chain operations. The public chart is intentionally generic and sanitized: it captures FP Validated's operating patterns without publishing private node placement, private storage paths, exact secret paths, or production endpoints.
+`blockchain-node` is a generic chart for running one chain node as a StatefulSet. It shows the shape of our deployments without node placement, storage paths, secret paths, or endpoints.
+
+:::note[Chart availability]
+The chart source described on this page is not in the public docs repositories at the moment. Treat the layout and values below as the chart's contract. The charts we run in production are per chain family and are described in [ArgoCD and Values Pattern](/chains/shared-kubernetes/argocd-and-values-pattern#charts).
+:::
 
 ## Source layout
 

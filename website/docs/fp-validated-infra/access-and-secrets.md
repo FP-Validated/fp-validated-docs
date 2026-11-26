@@ -1,98 +1,105 @@
 ---
 title: Access and Secrets Model
 sidebar_position: 3
-last_verified: 2026-07-03
+last_verified: 2026-11-26
 ---
 
 # Access and Secrets Model
 
-The public principle is straightforward: operators access management systems through controlled identity paths, while workloads receive secrets only through scoped runtime delivery.
+People reach management services through a VPN and single sign-on. Workloads get secrets from Vault through External Secrets. The two paths do not cross: an operator's login does not grant access to a workload's secrets, and a workload's Vault role does not grant access to management services.
 
 ```mermaid
 flowchart LR
-  user[Human Operator]
-  idp[Identity Provider]
-  gateway[Private Management Gateway]
+  user[Operator]
+  vpn[VPN]
+  idp[Identity provider with MFA]
   ui[Management UIs]
-  api[Guard and Kubernetes APIs]
+  guard[FP Validated Guard]
+  api[Kubernetes API and ArgoCD]
   vault[Vault]
   eso[External Secrets]
-  workload[Workloads]
+  workload[Workload]
 
-  user --> idp
-  idp --> gateway
-  gateway --> ui
-  gateway --> api
+  user --> vpn
+  vpn --> idp
+  idp --> ui
+  idp --> guard
+  guard --> api
   vault --> eso
   eso --> workload
-  api --> workload
 ```
 
-## Access model
+## Operator access
 
-Management UIs such as ArgoCD, Grafana, Prometheus, Alertmanager, Vault, Authentik-backed access flows, and platform APIs are not designed as public unauthenticated endpoints. The live platform uses:
+1. The operator connects to the VPN. Management services have no public endpoint, and the management cluster's Kubernetes API is private.
+2. Internal DNS resolves the management hostnames to an internal ingress.
+3. The ingress sends the operator to the identity provider (Authentik). MFA is mandatory. A passkey or hardware key is the preferred method, and an authenticator app is the fallback.
+4. The service authorizes the operator by group.
 
-- private or identity-aware management access paths,
-- Authentik/OIDC style authentication,
-- baseline RBAC that avoids default Secret read access,
-- domain-separated permissions for platform, observability, access, and security roles,
-- Vault + External Secrets for runtime secret delivery rather than manual secret copying.
-
-## No routine server login
-
-A core FP Validated operating principle is that product and operations work should be possible without direct login to production servers.
-
-For example, a dashboard-style product deployment follows this pattern:
-
-1. Build and validate the application outside the server.
-2. Publish an immutable container image.
-3. Update the desired Kubernetes deployment state.
-4. Let ArgoCD/Kubernetes reconcile the rollout.
-5. Verify readiness, ingress, logs, and health checks externally.
-
-This separates authority:
-
-| Actor | Capability |
+| Service | How access is decided |
 | --- | --- |
-| Developer | Propose code and image changes. |
-| Platform operator | Approve deployment state and rollout. |
-| Observability role | Read dashboards, alerts, and health reports. |
-| Guard service | Perform scoped operational actions through API controls. |
-| Secret controller | Inject secrets into workloads without exposing values to users. |
+| ArgoCD | OIDC groups mapped to ArgoCD roles. Read and sync is a separate group from administration. The local admin account is disabled. |
+| Grafana | OIDC groups mapped to viewer, editor, and admin. |
+| Prometheus and Alertmanager | No per-user authorization of their own, so the ingress enforces sign-in in front of them. |
+| Vault | OIDC login, then Vault policy. Administrator membership needs separate approval, and admin tokens are short-lived. |
+| Guard | SSO login against an allowlist of users, then Guard's own roles and levels. |
 
-## Secrets model
+Identity provider accounts are local accounts managed by us. External identity providers are not connected. The platform-wide admin group is for break-glass use and is kept small.
 
-Vault and External Secrets are used as the runtime secret delivery pattern. Public docs should describe secret *classes*, not secret values or exact paths.
+## Day-to-day work goes through Guard
 
-| Secret class | Example use |
+Operators do not use `kubectl` against the clusters for routine work. They use [FP Validated Guard](/fp-validated-infra/fp-validated-guard), which adds levels, approval for dangerous calls, Secret masking, and an audit log on top of the Kubernetes API and ArgoCD.
+
+Direct host access over SSH is a break-glass path. It is used when the cluster API itself is unavailable or a host needs repair below Kubernetes.
+
+## Secrets
+
+Vault runs in the management cluster. It unseals automatically through the cloud provider's key management service, so a Vault restart does not need a person to enter unseal keys.
+
+Workloads never talk to Vault with a long-lived token. The path is:
+
+1. Each workload namespace has a secret store that points at Vault and a service account for External Secrets.
+2. External Secrets logs in to Vault with that service account's Kubernetes token. Vault validates the token with the cluster it came from. Each cluster has its own Vault auth mount.
+3. Vault maps the login to a role for that one namespace. The role's policy grants read access to an enumerated list of paths.
+4. External Secrets writes the values into a Kubernetes Secret, and the pod mounts it read-only.
+
+| Property | Effect |
 | --- | --- |
-| Cluster bootstrap secret | Initial platform bootstrap and recovery. |
-| Application credential | Database, webhook, or API integration credential. |
-| Validator key material | Node key, signer shard, validator key, or slashing database credential. |
-| TLS / ingress material | Management UI or service ingress identity. |
+| One role and one policy per chain namespace | A compromised namespace can read its own chain's secrets and nothing else. |
+| Read-only policies with listed paths | A workload cannot write to Vault or browse it. |
+| Separate namespaces for testnet and mainnet | Several charts refuse to render when the namespace does not contain the network name, so a testnet workload cannot mount a mainnet secret by mistake. |
+| Secrets Application synced first | A workload whose secret is missing fails to start. It does not start with a generated placeholder key. |
 
-## Public redaction policy
+CI rejects any manifest that reads a Vault root token.
 
-Never publish:
+### Secret classes
 
-- exact public/private IPs or CIDRs,
-- node hostnames,
-- VPN peer configuration,
-- Vault unseal/root/bootstrap procedure details,
-- Vault paths that reveal production key layout,
-- kubeconfig contents or file paths,
-- OIDC client secrets,
-- webhook URLs or auth headers,
-- rendered Kubernetes Secret payloads,
-- exact backend service targets for private UIs.
+| Class | Examples |
+| --- | --- |
+| Validator and signer keys | Consensus key, threshold signer share, validator keystore, signer state. |
+| Node identity | P2P node key. |
+| Application credentials | Database password, API token, registry pull credential, webhook secret. |
+| Platform secrets | OIDC client secrets, TLS material for internal services. |
+| Bootstrap secrets | The few values needed before Vault exists. These are kept in a password manager, not in Vault and not in Git. |
 
-## What can be public
+Some signing keys are not readable by any single system. The LayerZero DVN signer uses a cloud KMS key that never leaves the KMS. Another validator key is encrypted at rest, and its decryption key is split into three shares held in three different places, two of which are needed at start.
 
-It is safe to describe:
+## What these docs leave out
 
-- that Vault + External Secrets is used,
-- that identity-aware ingress protects management UIs,
-- that human access is role-scoped,
-- that baseline roles avoid Secret read access,
-- that signing secrets fail closed when missing or inconsistent,
-- that routine operations happen through GitOps, Guard, and observability surfaces rather than direct server login.
+This site does not publish:
+
+- IP addresses and CIDR ranges
+- node names and private hostnames
+- VPN peer configuration
+- Vault paths, role names, and policy contents
+- Vault recovery and bootstrap procedures
+- kubeconfig contents and locations
+- OIDC client secrets, webhook URLs, and auth headers
+- rendered Kubernetes Secrets
+- backend addresses of private UIs
+
+## Related
+
+- [FP Validated Guard](/fp-validated-infra/fp-validated-guard)
+- [GitOps Topology](/fp-validated-infra/gitops-topology)
+- [Ports and Secrets Contract](/chains/shared-kubernetes/ports-and-secrets-contract)

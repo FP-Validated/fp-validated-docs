@@ -17,9 +17,9 @@ Chain documentation is organized by the chain first, then by network or deployme
 | Chain | What is documented |
 | --- | --- |
 | [Ethereum](/chains/ethereum/overview) | Public Ethereum/EVM node interface guide. |
-| [Sei](/chains/sei/deployment-architecture) | Validator and Horcrux deployment architecture. |
-| [Stable](/chains/stable/deployment-architecture) | Stablevisor validator, Horcrux, EVM endpoint, and cutover runbook. |
-| [Initia](/chains/initia/deployment-architecture) | Active validator and Horcrux topology. |
+| [Sei](/chains/sei/deployment-architecture) | Validator deployment architecture with a local signer. |
+| [Stable](/chains/stable/deployment-architecture) | Stablevisor validator, threshold signer, EVM endpoint, and cutover runbook. |
+| [Initia](/chains/initia/deployment-architecture) | Validator deployment architecture with a local signer and oracle sidecar. |
 | [Walrus](/chains/walrus/storage-node-guide) | Storage node deployment guide. |
 | [Canton](/chains/canton/validator-splice-ops) | Splice validator operations guide. |
 | [Sui](/chains/sui/overview) | Full node and developer interface guide. |
@@ -28,7 +28,7 @@ Chain documentation is organized by the chain first, then by network or deployme
 
 ## Additional supported networks
 
-These networks are actively supported by FP Validated, but they do not yet have full standalone chain guides in this public docs tree.
+FP Validated supports these networks, but they do not have a full chain guide on this site yet.
 
 | Network | Support class | Public docs status |
 | --- | --- | --- |
@@ -41,6 +41,9 @@ These networks are actively supported by FP Validated, but they do not yet have 
 | Optimism | RPC | Uses the shared EVM RPC exposure and gateway model. |
 | Base | RPC | Uses the shared EVM RPC exposure and gateway model. |
 | Tempo | RPC | Public support listed; detailed interface guide not published here yet. |
+| Injective | Validator | [Staking guide](/staking/injective) published. No node operations guide yet. |
+| Monad | Validator | [Staking guide](/staking/monad) published. No node operations guide yet. |
+| Stacks | Signer | [Staking guide](/staking/stacks) published. No node operations guide yet. |
 
 ## Cross-chain references
 

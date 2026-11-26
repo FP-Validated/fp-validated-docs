@@ -1,56 +1,57 @@
 ---
 title: Sei Deployment Architecture
 sidebar_position: 1
-last_verified: 2026-05-29
+last_verified: 2026-11-26
 ---
 
 # Sei Deployment Architecture
 
-Sei uses a Cosmos-style validator deployment backed by `charts/chain-templates` and `variables/sei` in `chain deployment repository`.
+The Sei mainnet validator runs as a single host-network workload from the shared `chain-templates` chart. It signs with a local signer. The chart rejects a threshold signer configuration for Sei.
 
 ## Deployed roles
 
-| Role | File | Node placement | Notes |
-| --- | --- | --- | --- |
-| Validator | `variables/sei/validator-01.yaml` | `dedicated Kubernetes node` | `server_type: validator`, currently `signerMode: local`, uses hostPath reuse from `persistent chain data directory`. |
-| Horcrux signer 1 | `variables/sei/horcrux-01.yaml` | `dedicated Kubernetes node` | v3 cosigner overlay with Vault shard/ECIES refs. |
-| Horcrux signer 2 | `variables/sei/horcrux-02.yaml` | `dedicated Kubernetes node` | v3 cosigner overlay with ordinal-specific Vault refs. |
-| Horcrux signer 3 | `variables/sei/horcrux-03.yaml` | `dedicated Kubernetes node` | v3 cosigner overlay with ordinal-specific Vault refs. |
+| Role | Values file | Notes |
+| --- | --- | --- |
+| Sync-only node | `variables/sei-mainnet/fullnode-01.yaml` | Same node name and volume as the validator. No validator key. Used to sync before activation. |
+| Active validator | `variables/sei-mainnet/active.yaml` | `signerMode: local`, `validatorRole: active`. Mounts the node key, the validator key, and the last signed state from Vault. |
 
-## Common values to review first
+Both files layer on `variables/sei-mainnet/common-values.yaml`. Only one of them is referenced by the Application at a time. See [Sync-only node and signing node](/chains/shared-kubernetes/argocd-and-values-pattern#sync-only-node-and-signing-node).
 
-`variables/sei/common-values.yaml` sets the chain identity and default runtime profile:
+## Common values
 
-- chain ID: `pacific-1`.
-- storage intent: 2Ti host-backed storage.
-- preparer enabled.
-- Sei runtime image: `ghcr.io/sei-protocol/sei:v6.5.0` from the validator overlay.
-- baseline ports from the shared port registry.
+- Chain ID: `pacific-1`.
+- Runtime image: the official `sei` image at a pinned version (v6.7.4 at the time of writing).
+- Upgrade plans: each on-chain upgrade is listed with its binary source, and the binary is staged before the upgrade height.
+- Storage: an existing volume claim. The chart does not create the volume.
+- Ports: a fixed offset block for Sei.
 
-## Validator-specific behavior
+## Network behavior
 
-The validator template (`charts/chain-templates/templates/sei.yaml`) renders a host-network workload. That means:
+The validator uses host networking, so every enabled endpoint is reachable on the node's address.
 
-1. Every exposed port must be checked against `docs/port-registry.md`.
-2. The node-level filesystem path is part of the deployment contract.
-3. Rollback must preserve both data directory and signer state.
+| Endpoint | State |
+| --- | --- |
+| P2P | Enabled. |
+| Native Prometheus metrics | Enabled, scraped inside the cluster. |
+| RPC | Disabled as a Service. The process listens on loopback only. |
+| REST API, gRPC, gRPC-web | Disabled. gRPC keeps a loopback bind so that enabling it later does not expose it. |
+| EVM HTTP and WebSocket | Disabled on the validator. |
 
-The current validator overlay uses:
+## Signer state
 
-- high resource profile: CPU `16`, memory `100`, no limits.
-- hostPath migration/reuse: `persistent chain data directory`.
-- Vault refs for node key and local priv-validator key/state.
-- endpoint overrides that enable EVM HTTP/WebSocket surfaces.
+With a local signer, the last signed height, round, and step are part of the validator's identity. When the validator moves to another host:
 
-## Signer migration note
+1. The old instance is stopped and confirmed gone.
+2. Its final signer state is written to Vault.
+3. The new instance starts with `signerStateHandoff` reading that state, and compares it with the chain height before it signs.
 
-The presence of Horcrux overlays does not by itself mean the validator is already signing through Horcrux. `validator-01.yaml` is the current source for `signerMode`; document cutover state explicitly before syncing signer-related changes.
+The chart does not overwrite newer state on disk with older state from Vault.
 
 ## Preflight checklist
 
-- [ ] Render the Sei Applications locally.
-- [ ] Confirm `signerMode` in `validator-01.yaml` matches the intended state.
-- [ ] Confirm Vault paths for node key and local signer state exist.
-- [ ] Confirm Horcrux shard/ECIES paths for all three signer overlays exist before Horcrux cutover.
-- [ ] Confirm the persistent chain data directory exists on the scheduled Kubernetes node and matches expected ownership.
-- [ ] Confirm host-network ports are free on validator and signer nodes.
+- [ ] Render the chart with the common file and the intended node file.
+- [ ] Confirm which node file the Application references, and that it is the intended role.
+- [ ] Confirm the node key, validator key, and signer state exist in Vault.
+- [ ] Confirm no other instance of this validator is running anywhere.
+- [ ] Confirm the P2P port is free on the node and open in the firewall.
+- [ ] Confirm the volume claim is bound.
