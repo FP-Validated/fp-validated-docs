@@ -68,7 +68,7 @@ Never commit secrets to documentation, examples, Helm values, Docker Compose fil
 - Change an image version through a reviewed pull request, not in the cluster.
 - Where an internal registry with a vulnerability scanner is available to the cluster, mirror the image there and pull it with a pull-only credential.
 
-See [Container Image Supply Chain](/fp-validated-infra/image-supply-chain) for which of these controls is in place on which cluster.
+See [Container Image Supply Chain](/fp-validated-infra/image-supply-chain) for the principles behind these rules.
 
 ## RPC hardening
 

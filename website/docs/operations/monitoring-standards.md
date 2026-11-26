@@ -36,7 +36,7 @@ Build dashboards from the operator question outward: "Is the fleet healthy?", "I
 Every node should provide:
 
 - A private metrics endpoint reachable only by Prometheus.
-- Labels for chain, network, node, role, and component, and an `alert` label that decides whether the target can fire alerts.
+- Labels for chain, network, node, role, and component, and an explicit switch that decides whether the target can fire alerts.
 - Alert rules written against the client's own metric names, so a rule can be checked against the client's documentation.
 - Grafana panels for node state, RPC health, host resources, and recent deploy markers.
 
@@ -46,8 +46,8 @@ groups:
     rules:
       - alert: RpcErrorRateHigh
         expr: |
-          sum(rate(rpc_requests_total{alert="on", status=~"5.."}[5m])) by (chain, network, node)
-            / sum(rate(rpc_requests_total{alert="on"}[5m])) by (chain, network, node) > 0.05
+          sum(rate(rpc_requests_total{status=~"5.."}[5m])) by (chain, network, node)
+            / sum(rate(rpc_requests_total[5m])) by (chain, network, node) > 0.05
         for: 10m
         labels:
           severity: critical
@@ -63,7 +63,7 @@ groups:
 | Rule | Requirement |
 | --- | --- |
 | Page only on user or chain risk | A page must require immediate human action. Everything else is ticket or dashboard. |
-| Include the runbook and dashboard links | Every alert carries a `runbook_url` and a `dashboard_url`. |
+| Include the runbook and dashboard links | Every alert carries a link to its runbook and its dashboard. |
 | Use sustained windows | Avoid paging on one scrape failure unless it represents endpoint outage. |
 | Scope maintenance narrowly | Turn off alerts for the one target under maintenance, not for the node or the chain. See [Alert Control Runbook](/operations/alert-control-runbook). |
 

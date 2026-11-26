@@ -18,7 +18,7 @@ Chain documentation is organized by the chain first, then by network or deployme
 | --- | --- |
 | [Ethereum](/chains/ethereum/overview) | Public Ethereum/EVM node interface guide. |
 | [Sei](/chains/sei/deployment-architecture) | Validator deployment architecture with a local signer. |
-| [Stable](/chains/stable/deployment-architecture) | Stablevisor validator, threshold signer, EVM endpoint, and cutover runbook. |
+| [Stable](/chains/stable/deployment-architecture) | Validator deployment architecture with a threshold signer. |
 | [Initia](/chains/initia/deployment-architecture) | Validator deployment architecture with a local signer and oracle sidecar. |
 | [Walrus](/chains/walrus/storage-node-guide) | Storage node deployment guide. |
 | [Canton](/chains/canton/validator-splice-ops) | Splice validator operations guide. |

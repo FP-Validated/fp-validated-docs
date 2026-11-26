@@ -6,77 +6,57 @@ last_verified: 2026-11-26
 
 # FP Validated Infrastructure Overview
 
-FP Validated runs on two Kubernetes clusters with different jobs. A management cluster holds the control services: GitOps, secrets, identity, the internal image registry, and central monitoring. A workload cluster runs the chain nodes, signers, and product services. The management cluster deploys to the workload cluster. Nothing in the workload cluster deploys to the management cluster.
+FP Validated runs validators, signers, and nodes on Kubernetes. This section explains the principles the platform is built on and the standards we hold it to. It is not a map of the deployment: addresses, hostnames, component layouts, and procedures are left out on purpose. The list of what is left out is in the [redaction policy](/fp-validated-infra/access-and-secrets#what-these-docs-leave-out).
 
 ```mermaid
-flowchart TB
+flowchart LR
   ops[Operators and agents]
 
-  subgraph mgmt[Management cluster]
-    idp[Identity provider]
-    argo[ArgoCD]
-    vault[Vault]
-    prom[Central Prometheus and Alertmanager]
+  subgraph control[Control services]
+    change[Git review and deployment]
+    secrets[Secrets]
+    identity[Identity]
+    monitoring[Monitoring]
   end
 
-  subgraph work[Workload cluster]
-    guard[FP Validated Guard]
-    eso[External Secrets]
-    chains[Chain nodes and signers]
-    cprom[Cluster Prometheus]
+  subgraph workloads[Chain workloads]
+    nodes[Nodes]
+    signers[Signers]
   end
 
-  ops -- VPN and SSO --> idp
-  ops --> guard
-  guard --> argo
-  argo -- sync --> chains
-  vault --> eso
-  eso --> chains
-  chains --> cprom
-  cprom -- remote write --> prom
+  ops --> control
+  control --> workloads
 ```
 
-This section describes how the platform is built. It leaves out IP addresses, private hostnames, node names, VPN configuration, Vault paths, and credentials. The full list is in the [redaction policy](/fp-validated-infra/access-and-secrets#what-these-docs-leave-out).
+## Principles
 
-## The two clusters
+| Principle | What it means in practice |
+| --- | --- |
+| Control services are separate from chain workloads. | The services that deploy, hold secrets, authenticate people, and evaluate alerts run apart from nodes and signers. Maintenance or a fault on the control side does not stop a validator from signing. |
+| Every change goes through Git. | The desired state of the platform is in Git. A change is a reviewed pull request, not a command typed against a cluster. |
+| A person decides when a change takes effect. | Merging a change does not roll it out. An operator reads the difference and applies it to the one workload that should change. Nothing is deleted automatically. |
+| One active signer per key. | Signing roles have no automatic failover. If it is unclear which instance is signing, the answer is to stop signing and investigate. |
+| Signing safety comes before uptime. | A validator that is down loses rewards. A validator that double-signs is slashed. When the two conflict, we accept downtime. |
+| Secrets stay in the secrets manager. | Keys and credentials are never in Git, in configuration values, or in these docs. A workload receives only the secrets of its own chain and network. |
+| Least privilege, for people, agents, and workloads. | Access starts at read-only. Each step up is granted to a named person or key, and dangerous actions need a second confirmation or a human approval. |
+| An alert must be actionable. | An alert pages only when someone has to act now, and every alert comes with a runbook and a dashboard. |
+| Destructive work needs explicit approval. | Deleting data, a namespace, or a node is approved for that specific action, every time. |
 
-| | Management cluster | Workload cluster |
-| --- | --- | --- |
-| Kubernetes | Managed Kubernetes service with a private API endpoint. | k3s. |
-| Runs | ArgoCD, Vault, External Secrets, the identity provider (Authentik), the internal registry (Harbor), the policy engine (Kyverno), cert-manager, ingress, central Prometheus, Alertmanager, and Grafana. | Chain nodes, validators, signers, storage nodes, FP Validated Guard, and product services such as this docs site, the staking platform, and the RPC gateway. |
-| Does not run | Chain nodes or validators. | Its own ArgoCD, Vault, Alertmanager, or Grafana. |
-| Nodes | One provider, one region. | Several providers and regions, joined into one cluster over an encrypted overlay network. |
-| Storage | Dynamic volumes from the provider. | Statically defined volumes with a retain policy. A chain's data stays on a named volume or a named host. |
+## Where each topic is described
 
-A signing workload runs as a single replica that is tied to a named node or to one disk that only one pod can mount. The charts refuse to render a second replica of a signer, and moving a signing identity to another host is a manual change.
+| Topic | Page |
+| --- | --- |
+| How a change reaches a cluster | [GitOps Topology](/fp-validated-infra/gitops-topology) |
+| How people and workloads are authenticated, and how secrets are delivered | [Access and Secrets Model](/fp-validated-infra/access-and-secrets) |
+| The operations console used by people and AI agents | [FP Validated Guard](/fp-validated-infra/fp-validated-guard) |
+| Metrics, alerts, and notification | [Monitoring Architecture](/fp-validated-infra/monitoring-architecture) |
+| Where container images come from and how versions change | [Container Image Supply Chain](/fp-validated-infra/image-supply-chain) |
+| How an alert becomes an incident | [Incident Response Runbook Model](/fp-validated-infra/incident-response) |
+| Build order and recovery order | [Bootstrap and Recovery](/fp-validated-infra/bootstrap-and-recovery) |
+| Response targets and slashing policy | [Responsiveness and Slashing Policy](/fp-validated-infra/responsiveness-and-slashing-policy) |
 
-An older workload cluster is still registered with ArgoCD while its last workloads move over. New chain work goes to the workload cluster described here.
+## When control services are unavailable
 
-## Where each concern lives
+Chain workloads keep running. A validator already holds what it needs to produce blocks and sign, and it makes no call to the control services to do so.
 
-| Concern | Where | Page |
-| --- | --- | --- |
-| Desired state | Git repositories, synced by ArgoCD in the management cluster. | [GitOps Topology](/fp-validated-infra/gitops-topology) |
-| Operator access | VPN, then single sign-on with MFA. Day-to-day work goes through Guard. | [Access and Secrets Model](/fp-validated-infra/access-and-secrets) |
-| Secrets | Vault in the management cluster, delivered to workloads by External Secrets. | [Access and Secrets Model](/fp-validated-infra/access-and-secrets) |
-| Operations console | FP Validated Guard, used by people and by AI agents under the same rules. | [FP Validated Guard](/fp-validated-infra/fp-validated-guard) |
-| Metrics and alerts | A Prometheus per cluster forwards to a central Prometheus, which evaluates every rule. | [Monitoring Architecture](/fp-validated-infra/monitoring-architecture) |
-| Images | Pinned versions from upstream publishers, and an internal registry with a vulnerability scanner. | [Container Image Supply Chain](/fp-validated-infra/image-supply-chain) |
-| Incidents | Pager for critical alerts, Slack cards for all alerts, runbooks per alert. | [Incident Response Runbook Model](/fp-validated-infra/incident-response) |
-
-## What happens when the management cluster is down
-
-Chain workloads keep running. They already hold their secrets as Kubernetes Secrets and need no call to the management cluster to produce blocks or sign.
-
-What stops is change and visibility: no ArgoCD sync, no secret refresh, and no rule evaluation or paging from the central Prometheus. The cluster Prometheus buffers recent metrics and sends them when the central Prometheus is back. Recovery order is covered in [Bootstrap and Recovery](/fp-validated-infra/bootstrap-and-recovery).
-
-## Operating rules
-
-These rules hold across both clusters.
-
-1. Changes go through Git. A change is a reviewed pull request, and the cluster is changed by syncing that commit.
-2. ArgoCD sync is manual. An operator reads the diff and syncs the one application that should change. Automatic pruning is off.
-3. One active signer per key. Signing roles have no automatic failover. If it is unclear which instance is signing, the answer is to stop signing and investigate.
-4. Signing keys and credentials live in Vault and reach workloads only through External Secrets. They are never in Git, in Helm values, or in these docs.
-5. A validator moves between hosts or clusters only after the old instance has stopped. The same identity must not sign from two places.
-6. Destructive work, such as deleting volumes, namespaces, or nodes, needs explicit approval for that specific action.
+What stops is change and visibility. Nothing can be deployed, secrets are not refreshed, and alert evaluation pauses until the control services are back. During that time we check chains from external sources and do not start risky changes.

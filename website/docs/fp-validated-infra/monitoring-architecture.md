@@ -6,81 +6,54 @@ last_verified: 2026-11-26
 
 # Monitoring Architecture
 
-Metrics are collected in each cluster and evaluated in one place. Every cluster runs its own Prometheus, which scrapes local targets and forwards the raw series to a central Prometheus in the management cluster. Alert rules run only on the central Prometheus, and Alertmanager runs next to it.
+Metrics are collected next to the workloads and evaluated in one place. Alert rules, alert routing, and dashboards live with the control services, so there is a single answer to "what is firing" and a single set of rules to review.
 
 ```mermaid
 flowchart LR
   targets[Chain workloads and hosts]
-  collector[Cluster Prometheus]
-  central[Central Prometheus]
-  am[Alertmanager]
+  collect[Collection]
+  central[Central evaluation]
   pager[On-call paging]
   guard[FP Validated Guard]
-  slack[Slack alert cards]
-  grafana[Grafana dashboards]
+  chat[Alert cards in chat]
+  dash[Dashboards]
 
-  targets --> collector
-  collector -- remote write --> central
-  central -- alert rules --> am
-  am -- critical --> pager
-  am -- polled --> guard
-  guard --> slack
-  central --> grafana
+  targets --> collect
+  collect --> central
+  central -- critical --> pager
+  central --> guard
+  guard --> chat
+  central --> dash
 ```
 
-## Collection
+## Principles
 
-| Source | How it is collected |
+| Principle | What it means in practice |
 | --- | --- |
-| Host metrics | A node-exporter DaemonSet on every node. |
-| Chain metrics | The metrics endpoint each chain client already exposes, scraped through a ServiceMonitor that ships with the workload's Helm chart. No exporter sits in between to rename chain metrics. |
-| Kubernetes metrics | kube-state-metrics and the kubelet, from kube-prometheus-stack. |
-| External checks | Reachability probes against public P2P ports from two sites, an exporter that reads validator duty status from a public beacon API, and an exporter that reads public reference block heights so node height can be compared with the network. |
+| Use the chain's own metrics. | We read the metrics each chain client already exposes, under their original names, so a rule can be checked against the client's documentation. |
+| Look from the outside as well. | Internal metrics are compared with external views: public reference heights, reachability of our public ports from more than one location, and validator duty status seen from public sources. |
+| Alerting is opt-in and decided in Git. | A target alerts only when it has been switched on in its own configuration. A target that is being built or retired is still visible on dashboards but cannot page anyone. |
+| An alert must be actionable. | A page means someone has to act now. Everything else is a notification or a dashboard. |
+| No alert without a runbook. | A new alert is accepted only with a severity, a description, a runbook link, and a dashboard link. Rules are tested automatically before they merge. |
+| The monitoring system is monitored. | Loss of collection or of alert delivery raises its own alert. |
+| Dashboards are code. | Dashboards are stored in Git and reviewed like any other change. |
 
-Every chain series carries five inventory labels: `chain`, `network`, `node`, `workload_role`, and `component`. Rules and dashboards select on these labels, not on pod names, so a workload can move between nodes without rule changes.
+## What we watch
 
-The cluster Prometheus is a forwarder. It keeps a short local history and has no rules, no Alertmanager, and no Grafana of its own. A denylist keeps a few high-cardinality metric families out of the forwarded stream, and CI fails when a rule or dashboard reads a metric on that list.
-
-No log shipping agent is deployed. Logs are read on demand through the Kubernetes API, normally through [FP Validated Guard](/fp-validated-infra/fp-validated-guard).
-
-## Alert eligibility
-
-Whether a target can alert is decided when it is scraped, not in Alertmanager. A target that should alert gets the label `alert="on"`. Rules select that label explicitly, so a target without it is still scraped and still visible on dashboards, but it cannot fire.
-
-The switch lives in Git next to the target:
-
-- For workloads in the workload cluster, it is a value on the workload's ServiceMonitor.
-- For hosts tracked in the static node inventory, it is a field in that node's values file.
-
-Node-down detection uses a separate label, `node_down_alert="on"`, so turning off host metric alerts for a node does not turn off detection of the node disappearing. The [Alert Control Runbook](/operations/alert-control-runbook) shows the fields.
-
-## Rules
-
-Rules are PrometheusRule objects kept in the monitoring repository and synced by ArgoCD. They are grouped by what they watch:
-
-| Group | Examples |
+| Area | Examples |
 | --- | --- |
-| Chain families | Cosmos SDK chains (missed blocks, signing stalled, slashed), Ethereum (beacon or execution head stalled, validator client without attesters, SSV duties stalled), Sui, Aptos, Walrus, Stacks, and others. |
-| Signing safety | Slashing-protection database unavailable, slashing protection triggered, clock skew on a signing node. |
-| External view | A validator we operate is not attesting according to a public beacon API. A public P2P port is unreachable from every probe site. |
-| RPC | Head stalled, or our height lags the public reference. |
-| Infrastructure | Node exporter down, disk saturation, an expected chain target missing, secret store not ready. |
-| Monitoring plane | A cluster Prometheus stopped forwarding, a cluster's metrics are missing centrally, Guard stopped polling Alertmanager, a Slack delivery failed. |
-
-CI runs `promtool check rules` and rule unit tests on every pull request. A new or changed alert must have a severity, a summary, a description, a runbook link, and a dashboard link, or the check fails.
+| Chain liveness | Height advancing, lag against a public reference, peer count. |
+| Signing | Missed blocks or attestations, slashing-protection health, clock skew on signing nodes. |
+| External view | A validator we operate is not performing its duties according to a public source. A public port is unreachable. |
+| RPC | Head stalled, or our height behind a public reference. |
+| Hosts | Disk, memory, and a node disappearing. |
+| Secrets delivery | A workload's secret source is not ready. |
 
 ## Notification
 
-- Critical alerts go from Alertmanager to the on-call pager. This path does not depend on Guard.
-- Slack cards come from Guard, not from an Alertmanager receiver. A Guard worker polls Alertmanager for active alerts and posts one card per alert with the target, the time it started, the observed value, and the threshold. The card has buttons to acknowledge, to open a silence in Guard, and to open Grafana or Prometheus.
-- A silence is created through Guard. It needs at least one exact matcher, a reason, and an end time, and it is recorded under the requester's identity.
-- Grafana is used for dashboards only. Grafana alerting, contact points, and notification policies are not used.
-
-For planned maintenance, change the alert switch in Git. Silences are for cases where that path is too slow.
-
-## Dashboards
-
-Dashboards are stored in Git as ConfigMaps and loaded by the Grafana sidecar. They are grouped into folders for the management cluster, validators (one detail dashboard per chain), RPC nodes, and security. Each dashboard takes its datasource from a variable, and CI rejects a dashboard with a hardcoded datasource ID.
+- Critical alerts page the on-call operator directly. This path does not depend on Guard.
+- [FP Validated Guard](/fp-validated-infra/fp-validated-guard) posts a card in chat for each active alert with the target, the start time, the observed value, and the threshold. Operators acknowledge on the card, and Guard sends reminders for alerts that stay active.
+- A silence is the exception. It needs a reason and an end time, and it is recorded under the name of the person who asked for it. Planned maintenance is handled by switching the target's alerts off in Git.
 
 ## Related
 

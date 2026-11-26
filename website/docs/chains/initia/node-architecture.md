@@ -21,7 +21,7 @@ The Initia node architecture is documented at the role level, not at the private
 
 ## Safety model
 
-Initia operations prioritize active validator topology and remote signer controls. Public docs intentionally avoid exact topology, private host paths, node names, and secret paths.
+Initia operations prioritize a single active signer and a controlled handover when the validator moves. Public docs intentionally avoid exact topology, private host paths, node names, and secret paths.
 
 ## Architecture diagram
 

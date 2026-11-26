@@ -21,7 +21,7 @@ The Stable node architecture is documented at the role level, not at the private
 
 ## Safety model
 
-Stable operations prioritize remote signing, upgrade control, and cutover safety. Public docs intentionally avoid exact topology, private host paths, node names, and secret paths.
+Stable operations prioritize threshold signing, upgrade control, and cutover safety. Public docs intentionally avoid exact topology, private host paths, node names, and secret paths.
 
 ## Architecture diagram
 
